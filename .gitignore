@@ -1,0 +1,6 @@
+session_summary_guide.md
+__pycache__/
+*.pyc
+*.db
+encodings.pkl
+known_faces/
