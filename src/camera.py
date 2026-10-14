@@ -48,6 +48,11 @@ class Picamera2Backend(CameraBackend):
             if self.autofocus_enabled:
                 from libcamera import controls
                 self.picam2.set_controls({'AfMode': controls.AfModeEnum.Continuous})
+            # Explicitly request automatic exposure and white balance when supported.
+            automatic = {key: True for key in ('AeEnable', 'AwbEnable')
+                         if key in self.picam2.camera_controls}
+            if automatic:
+                self.picam2.set_controls(automatic)
             self.picam2.start()
             logger.info("Picamera2 (IMX708) started successfully.")
         except Exception as e:

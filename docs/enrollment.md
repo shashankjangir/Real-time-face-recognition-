@@ -121,3 +121,46 @@ codes remain unchanged.
 Move the floating camera using its top header (mouse or touch). With that header
 focused, arrow keys move it and Home returns it to the bottom center. Its position
 is kept during scrolling within the page and clamped when resizing the window.
+
+
+### Field testing: glasses, lighting, and lookalikes
+
+The deployed frame policy requires three consecutive completed, fresh checks of
+exactly the same group of distinct matched identities. Missing faces, unknowns,
+ambiguous matches, a changed group, or more than two seconds between checks reset
+confirmation. Enrollment still requires exactly one face. A confirmed group can
+request one hardware action; repeat actions involving any member of that group
+are suppressed for ten seconds. Detection, streaming, and audit logging continue.
+The cooldown is in memory and resets on service restart. This is temporal
+confirmation, not proof that the identities are correct or that faces are live.
+
+All *detected* faces must match. A person missed by the detector cannot be checked;
+this group policy cannot establish that everyone physically present is authorized.
+The overlay shows confirmation progress and remaining cooldown.
+
+Glasses: the current database stores one active embedding per person. Capturing
+the same name again replaces that active embedding; it does not currently add a
+second glasses/no-glasses template. For immediate testing, enroll with the glasses
+normally worn, in ordinary diffuse illumination, avoiding reflections over the
+eyes. Retain separate labelled evaluation captures with and without glasses.
+A future multi-sample enrollment change must explicitly support several validated
+templates per identity, compare distinct identities (not individual templates)
+for the runner-up margin, and test whether the extra templates increase false
+acceptances. Do not loosen the threshold just to fix glasses failures.
+
+Lighting: supported Picamera2 auto exposure and auto white balance controls are
+explicitly enabled. Use the quality check's brightness and sharpness values in
+normal room lighting, then under steady frontal diffuse light. A phone flash can
+create glasses reflections and does not test normal operating conditions. At a
+fixed frame rate, exposure time is limited; brightening a dark noisy image in
+software cannot restore missing facial detail. Check camera exposure/gain on the
+Pi before changing the capture frame rate or tuning exposure compensation.
+
+Lookalikes: the runner-up margin only compares enrolled identities. It cannot
+reject an unseen lookalike merely because the real person is not enrolled.
+Three consistent wrong matches are still wrong. Collect separate labelled known
+and unknown captures, including the observed lookalike pairs, to select and
+validate the threshold. Measure false acceptance and false rejection separately,
+with glasses and lighting conditions recorded. If the two distance distributions
+overlap, require another credential for access rather than claiming face-only
+recognition can distinguish these people reliably.

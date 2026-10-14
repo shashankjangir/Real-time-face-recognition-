@@ -97,3 +97,11 @@ class DashboardTests(unittest.TestCase):
                 self.assertEqual(backend.autofocus_enabled, supported)
             if supported: camera.set_controls.assert_called_once_with({'AfMode':2})
             else: camera.set_controls.assert_not_called()
+
+    def test_camera_enables_supported_automatic_exposure_controls(self):
+        camera = Mock()
+        camera.camera_controls = {'AeEnable': (False,True,True), 'AwbEnable': (False,True,True)}
+        module = SimpleNamespace(Picamera2=Mock(return_value=camera))
+        with patch.dict(sys.modules, {'picamera2':module}):
+            Picamera2Backend().start()
+        camera.set_controls.assert_called_once_with({'AeEnable':True, 'AwbEnable':True})

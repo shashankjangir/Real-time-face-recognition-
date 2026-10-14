@@ -157,8 +157,7 @@ class RecognitionRuntime:
                 with self.metrics_lock:
                     self.counts['out_of_order'] += 1
                 return
-            for index, face in enumerate(faces):
-                self.coordinator.apply(face, frame_id, self.session_id, index, len(faces)>1)
+            self.coordinator.apply_frame(faces, frame_id, self.session_id)
             finished = time.monotonic()
             elapsed = (finished-delivered)*1000
             processing = (finished-started)*1000

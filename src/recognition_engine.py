@@ -155,6 +155,12 @@ class AnnotationOverlay:
                             'succeeded': 'action completed',
                             'failed': 'action failed',
                             'cooldown_suppressed': 'action cooldown'}.get(face.action_outcome, face.action_outcome)
+            if face.reason == 'awaiting_confirmation':
+                action_label = f"confirming {getattr(face, 'confirmation_count', 0)}/{config.CONFIRMATION_FRAMES}"
+            elif face.reason == 'multiple_faces':
+                action_label = "group contains unknown or duplicate identity"
+            elif face.action_outcome == 'cooldown_suppressed':
+                action_label = f"cooldown {getattr(face, 'cooldown_remaining', 0):.1f}s"
             label = f"{face.name}: {face.decision.upper()} / {action_label}"
             font = cv2.FONT_HERSHEY_SIMPLEX
             scale = config.TEXT_FONT_SCALE
@@ -388,9 +394,7 @@ class RecognitionWorker(threading.Thread):
                 if self.runtime:
                     self.runtime.complete(frame_id, delivered_at, started, results)
                     continue
-                for index, face in enumerate(results):
-                    self.coordinator.apply(face, frame_id, self.session_id, index,
-                                           multiple_faces=len(results) > 1)
+                self.coordinator.apply_frame(results, frame_id, self.session_id)
                 self.engine.overlay.update(results, latency_ms=max((f.inference_time_ms for f in results), default=0), frame_id=frame_id)
                 self.last_error = None
             except Exception as e:
