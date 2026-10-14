@@ -70,3 +70,30 @@ Restart an already-running service after CLI enrollment so its gallery reloads.
 
 `python enroll.py --synthetic 50` generates test vectors in the working database;
 use it only with disposable development data. It does not enroll real people.
+
+
+## Diagnose a low quality score
+
+The dashboard's **Check face quality** control requires the administrator token
+but does not enroll or save a face. It examines one current frame and reports
+sharpness (40% weight), brightness (30%) and face size (30%), using the same
+heuristic as enrollment. The threshold remains 0.70. The score is not recognition
+accuracy and is not a calibrated probability.
+
+For example, a well-lit face at least 100 pixels across scores only 0.60 if its
+sharpness component is zero. Adding more light will not necessarily fix blur,
+and direct phone flash can reduce the brightness component through overexposure.
+Use the component readings to distinguish blur, lighting and a small face crop.
+A quality check describes one frame; enrollment validates a fresh frame again.
+
+Camera Module 3 now explicitly uses continuous autofocus when the camera exposes
+`AfMode`. The dashboard reports whether this mode was enabled, not whether the
+lens has actually achieved focus. Keep your face near the centre, hold still,
+use steady diffuse light, clean the lens and avoid being too close. If sharpness
+stays low, compare a native `rpicam-hello` preview on the Pi with the web preview
+before changing thresholds. Continuous autofocus is documented in the
+[official Picamera2 manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
+
+Quality-check requests use `POST /api/enrollment/quality` with the same Bearer
+administrator authentication as enrollment. Missing/multiple faces are reported
+without a readiness score; camera/model failures remain explicit errors.

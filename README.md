@@ -13,7 +13,8 @@ face, and measured image quality.
 - 128-dimensional face embeddings through `face_recognition` / dlib.
 - Browser-independent recognition workers, timestamped frames and stale-work rejection.
 - One JPEG encoder shared by all viewers, with measured runtime telemetry.
-- Live bounding boxes and identity labels through an MJPEG dashboard.
+- Monochrome, responsive dashboard with shared live video, identity search and history filters.
+- Capture-quality diagnostics and explicit continuous autofocus on supported Pi cameras.
 - SQLite WAL storage, indexed history queries, sessions, and filtered CSV exports.
 - Administrator-protected web enrollment and local image-file enrollment.
 - Unit and integration tests, including enrollment rejection paths.

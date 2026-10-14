@@ -32,6 +32,7 @@ class Picamera2Backend(CameraBackend):
         self.height = height
         self.fps = fps
         self.picam2 = None
+        self.autofocus_enabled = False
 
     def start(self):
         try:
@@ -42,6 +43,11 @@ class Picamera2Backend(CameraBackend):
                 controls={"FrameRate": self.fps}
             )
             self.picam2.configure(cam_config)
+            # Camera Module 3 supports AF; older fixed-focus modules do not.
+            self.autofocus_enabled = 'AfMode' in self.picam2.camera_controls
+            if self.autofocus_enabled:
+                from libcamera import controls
+                self.picam2.set_controls({'AfMode': controls.AfModeEnum.Continuous})
             self.picam2.start()
             logger.info("Picamera2 (IMX708) started successfully.")
         except Exception as e:

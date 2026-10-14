@@ -34,7 +34,8 @@ and no physical actuator. See [measurement scope](benchmarking.md).
 
 | Module | Responsibility |
 | --- | --- |
-| `src/app.py` | Flask dashboard, API, pipeline startup, and MJPEG responses. |
+| `src/app.py` | Flask routes, pipeline startup and MJPEG responses. |
+| `src/templates/`, `src/static/` | Dashboard markup, responsive styles, interactions and locally hosted font. |
 | `src/runtime.py` | Shared web/benchmark lifecycle, producer, encoder, timestamped decisions and telemetry. |
 | `src/camera.py` | Threaded latest-frame capture and camera backends. |
 | `src/recognition_engine.py` | Detection, embedding matching, overlays, queue, workers. |

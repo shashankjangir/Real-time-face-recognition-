@@ -29,38 +29,43 @@ if HAS_FACE_RECOGNITION:
 logger = logging.getLogger(__name__)
 
 
-def assess_face_quality(frame_bgr: np.ndarray, box) -> float:
-    """
-    Compute face quality score (0.0 to 1.0) based on resolution, sharpness, and brightness.
-    """
-    t, r, b, l = box.top, box.right, box.bottom, box.left
+def face_quality_report(frame_bgr, box):
+    """Explain the enrollment heuristic; not a calibrated recognition probability."""
     h, w = frame_bgr.shape[:2]
-    t, b = max(0, t), min(h, b)
-    l, r = max(0, l), min(w, r)
+    t, r, b, l = max(0, box.top), min(w, box.right), min(h, box.bottom), max(0, box.left)
     if b <= t or r <= l:
-        return 0.0
+        return dict(score=0.0, threshold=config.ENROLLMENT_MIN_QUALITY, ready=False,
+                    components={}, guidance=['Face crop is outside the image.'])
+    gray = cv2.cvtColor(frame_bgr[t:b, l:r], cv2.COLOR_BGR2GRAY)
+    sharpness = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    brightness = float(np.mean(gray))
+    sharpness_score = min(1.0, sharpness / 300.0)
+    brightness_score = (1.0 if 70 <= brightness <= 190 else
+                        max(0.2, 1.0-min(abs(brightness-70), abs(brightness-190))/70.0))
+    size = min(r-l, b-t)
+    size_score = min(1.0, size/100.0)
+    score = round(.4*sharpness_score + .3*brightness_score + .3*size_score, 3)
+    guidance = []
+    if sharpness_score < .75:
+        guidance.append('Sharpness is low. Hold still, keep your face near the centre, and give autofocus time to settle. Check the lens is clean.')
+    if brightness < 70:
+        guidance.append('Face is too dark. Use a steady, diffuse light in front of you.')
+    elif brightness > 190:
+        guidance.append('Face is too bright. Move direct light away; avoid pointing a phone flash at your face.')
+    if size < 100:
+        guidance.append('Face is small in the image. Move closer gradually while staying within focus range.')
+    if not guidance:
+        guidance.append('Capture conditions look suitable. Enrollment will check a fresh frame.')
+    return dict(score=score, threshold=config.ENROLLMENT_MIN_QUALITY,
+                ready=score >= config.ENROLLMENT_MIN_QUALITY,
+                components=dict(sharpness=dict(score=round(sharpness_score,3), value=round(sharpness,1), unit='Laplacian variance', weight=.4),
+                                brightness=dict(score=round(brightness_score,3), value=round(brightness,1), unit='mean / 255', weight=.3),
+                                size=dict(score=round(size_score,3), value=size, unit='px, shortest side', weight=.3)),
+                face_width=r-l, face_height=b-t, guidance=guidance)
 
-    crop = frame_bgr[t:b, l:r]
-    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
 
-    # Sharpness (Laplacian variance)
-    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    sharpness_score = min(1.0, laplacian_var / 300.0)
-
-    # Brightness (ideal range 70-190)
-    mean_val = float(np.mean(gray))
-    if 70 <= mean_val <= 190:
-        brightness_score = 1.0
-    else:
-        dist = min(abs(mean_val - 70), abs(mean_val - 190))
-        brightness_score = max(0.2, 1.0 - (dist / 70.0))
-
-    # Resolution (minimum 80x80 for high fidelity)
-    face_w, face_h = (r - l), (b - t)
-    size_score = min(1.0, min(face_w, face_h) / 100.0)
-
-    final_score = (sharpness_score * 0.4) + (brightness_score * 0.3) + (size_score * 0.3)
-    return round(float(final_score), 3)
+def assess_face_quality(frame_bgr, box):
+    return face_quality_report(frame_bgr, box)['score']
 
 
 def enroll_identity(name: str, encoding: np.ndarray, quality_score: float = 1.0,
