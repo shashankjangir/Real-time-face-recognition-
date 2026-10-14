@@ -1,6 +1,53 @@
-session_summary_guide.md
+# Python caches, environments, and build output
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Runtime storage and biometric data (keep directory descriptions)
+/data/*
+!/data/README.md
+/reports/*
+!/reports/README.md
+/known_faces/*
+!/known_faces/README.md
 *.db
-encodings.pkl
-known_faces/
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.pkl
+encodings.json
+*.log
+*.log.*
+
+# Private historical session notes and legacy scripts
+session_summary_guide.md
+/archive/local/
+26-08-2006/
+
+# Editor and OS files
+.vs/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Private hardware deployment records
+/hardware/*.local.*
+/hardware/local/

@@ -1,0 +1,6 @@
+split,name,image,session
+enroll,Alice,captures/enroll/alice.jpg,enrollment-day-1
+enroll,Bob,captures/enroll/bob.jpg,enrollment-day-1
+test,Alice,captures/test/alice-01.jpg,evaluation-day-2
+test,Bob,captures/test/bob-01.jpg,evaluation-day-2
+test,Unknown,captures/test/unenrolled-person-01.jpg,evaluation-day-2
