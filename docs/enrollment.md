@@ -97,3 +97,27 @@ before changing thresholds. Continuous autofocus is documented in the
 Quality-check requests use `POST /api/enrollment/quality` with the same Bearer
 administrator authentication as enrollment. Missing/multiple faces are reported
 without a readiness score; camera/model failures remain explicit errors.
+
+
+### Unknown faces and identity assignment
+
+The matcher now uses a conservative starting cosine-distance ceiling of 0.08
+and requires a 0.02 gap from the next closest identity. Near-ties, duplicate
+embeddings, invalid vectors, and candidates outside the ceiling are rejected as
+Unknown with no identity ID. These settings are not calibrated accuracy claims;
+validate them with separate captures of enrolled and unenrolled people on the Pi.
+The former 0.48 cosine ceiling was overly permissive. Dlib's raw Euclidean
+thresholds cannot be copied to this normalized cosine pipeline.
+Existing enrollments remain compatible. If a name was enrolled with the wrong
+person, re-enroll that name with the correct person; software cannot infer who
+an incorrectly labelled stored face really belongs to. Historical logs are not
+rewritten by this fix.
+
+An ALLOW decision followed by `not_configured` means the application's
+`ACCESS_ACTION` callback is absent. It is not confirmation of a physical unlock.
+The dashboard now displays this as "No hardware action configured" while audit
+codes remain unchanged.
+
+Move the floating camera using its top header (mouse or touch). With that header
+focused, arrow keys move it and Home returns it to the bottom center. Its position
+is kept during scrolling within the page and clamped when resizing the window.

@@ -31,13 +31,10 @@ MAX_FRAME_AGE_SECONDS = 0.5  # Discard stale work before inference and before ac
 # ============================================================================
 # FACE RECOGNITION & METRIC LEARNING (128D Embeddings)
 # ============================================================================
-# Cosine distance threshold for face matching (lower = stricter matching)
-# Range: 0.0 (identical) to 2.0 (orthogonal/opposite)
-# 0.45-0.50 yields >95% classification accuracy on 128D deep metric embeddings
-RECOGNITION_THRESHOLD = 0.48
-
-# Fallback Euclidean distance threshold
-EUCLIDEAN_THRESHOLD = 0.60
+# Cosine distance on normalized embeddings; not dlib's raw Euclidean tolerance.
+# Conservative starting settings, requiring validation with real known/unknown captures.
+RECOGNITION_THRESHOLD = 0.08
+RECOGNITION_MIN_MARGIN = 0.02  # Runner-up must be farther away by at least this much.
 
 # Face detection model: "hog" (fast, CPU optimized for Pi 5) or "cnn" (GPU/TPU)
 FACE_DETECTION_MODEL = "hog"

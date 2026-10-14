@@ -2,7 +2,8 @@
 const $ = id => document.getElementById(id);
 const text = (id, value) => { $(id).textContent = value; };
 const number = (value, digits = 1) => typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "—";
-const human = value => (value || "Not recorded").replaceAll("_", " ");
+const actionLabels = {not_configured: "No hardware action configured", not_requested: "No action requested", succeeded: "Action completed", failed: "Action failed", cooldown_suppressed: "Action cooldown"};
+const human = value => actionLabels[value] || (value || "Not recorded").replaceAll("_", " ");
 let paused = false, busy = false, identities = [], historyRequest = 0;
 async function api(url, options = {}) {
   const controller = new AbortController();
@@ -165,7 +166,7 @@ clock(); setInterval(clock, 1000); connectFeed(); poll();
 
 // Move the existing image and controls visually; never create another MJPEG client.
 const cameraSlot = $("camera-slot"), cameraShell = $("camera-shell");
-let docked = false;
+let docked = false, dockPosition = null, drag = null;
 function setCameraDock(enabled) {
   if (document.fullscreenElement) return;
   if (enabled !== docked) {
@@ -174,6 +175,8 @@ function setCameraDock(enabled) {
     document.documentElement.classList.toggle("has-camera-dock", enabled);
     if (!enabled) cameraSlot.style.minHeight = "";
     docked = enabled;
+    if (!enabled) { cameraShell.style.left = ""; cameraShell.style.top = ""; cameraShell.style.bottom = ""; cameraShell.style.transform = ""; }
+    else if (dockPosition) placeDock(dockPosition.x, dockPosition.y);
   }
   if (enabled) document.documentElement.style.setProperty("--camera-dock-space", (cameraShell.getBoundingClientRect().height + 40) + "px");
 }
@@ -193,3 +196,32 @@ document.addEventListener("focusin", event => {
     if (box.bottom > cameraShell.getBoundingClientRect().top) event.target.scrollIntoView({block:"center", behavior:"instant"});
   }
 });
+
+// Drag the header, keeping playback controls separate.
+const dragHandle = cameraShell.querySelector(".camera-top");
+dragHandle.tabIndex = 0;
+dragHandle.setAttribute("aria-label", "Move floating camera: drag or use arrow keys; Home resets position");
+dragHandle.title = "Drag to move / Arrow keys to move / Home to reset";
+function placeDock(x, y) {
+  const box = cameraShell.getBoundingClientRect();
+  dockPosition = {x: Math.max(8, Math.min(x, innerWidth-box.width-8)), y: Math.max(8, Math.min(y, innerHeight-box.height-8))};
+  Object.assign(cameraShell.style, {left: dockPosition.x+"px", top: dockPosition.y+"px", bottom:"auto", transform:"none"});
+}
+dragHandle.addEventListener("pointerdown", event => {
+  if (!docked || document.fullscreenElement || event.button !== 0) return;
+  const box = cameraShell.getBoundingClientRect();
+  drag = {id:event.pointerId, x:event.clientX-box.left, y:event.clientY-box.top};
+  dragHandle.setPointerCapture(event.pointerId); event.preventDefault();
+});
+dragHandle.addEventListener("pointermove", event => {
+  if (drag && drag.id === event.pointerId && docked && !document.fullscreenElement) placeDock(event.clientX-drag.x, event.clientY-drag.y);
+});
+for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) dragHandle.addEventListener(type, () => { drag = null; });
+dragHandle.addEventListener("keydown", event => {
+  if (!docked || document.fullscreenElement) return;
+  const delta = {ArrowLeft:[-20,0], ArrowRight:[20,0], ArrowUp:[0,-20], ArrowDown:[0,20]}[event.key];
+  const box = cameraShell.getBoundingClientRect();
+  if (delta) { event.preventDefault(); placeDock(box.left+delta[0], box.top+delta[1]); }
+  if (event.key === "Home") { event.preventDefault(); placeDock((innerWidth-box.width)/2, innerHeight-box.height-16); }
+});
+window.addEventListener("resize", () => { if (docked && dockPosition && !document.fullscreenElement) placeDock(dockPosition.x, dockPosition.y); });

@@ -24,4 +24,8 @@
 .camera-shell.is-floating:not(:fullscreen) .inverse{margin-top:12px;padding:6px 20px}
 html.has-camera-dock{scroll-padding-bottom:var(--camera-dock-space,340px)}
 html.has-camera-dock body{padding-bottom:var(--camera-dock-space,340px)}
-@media(max-height:500px){.camera-shell.is-floating:not(:fullscreen){width:260px;bottom:8px}.camera-shell.is-floating:not(:fullscreen) .camera-stage{max-height:24vh}.camera-shell.is-floating:not(:fullscreen) .camera-top{display:none}}
+@media(max-height:500px){.camera-shell.is-floating:not(:fullscreen){width:260px;bottom:8px}.camera-shell.is-floating:not(:fullscreen) .camera-stage{max-height:24vh}.camera-shell.is-floating:not(:fullscreen) .camera-top{padding:4px 10px}}
+
+.camera-shell.is-floating:not(:fullscreen) .camera-top{cursor:grab;touch-action:none;user-select:none}
+.camera-shell.is-floating:not(:fullscreen) .camera-top:active{cursor:grabbing}
+.camera-top:focus-visible{outline:2px solid white;outline-offset:-3px}

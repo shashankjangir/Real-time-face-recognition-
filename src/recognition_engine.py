@@ -150,7 +150,12 @@ class AnnotationOverlay:
             cv2.rectangle(vis, (b.left, b.top), (b.right, b.bottom), color, config.COLOR_BOX_THICKNESS)
 
             # Draw sleek label background
-            label = f"{face.name}: {face.decision.upper()} / {face.action_outcome}"
+            action_label = {'not_configured': 'no hardware action configured',
+                            'not_requested': 'no action requested',
+                            'succeeded': 'action completed',
+                            'failed': 'action failed',
+                            'cooldown_suppressed': 'action cooldown'}.get(face.action_outcome, face.action_outcome)
+            label = f"{face.name}: {face.decision.upper()} / {action_label}"
             font = cv2.FONT_HERSHEY_SIMPLEX
             scale = config.TEXT_FONT_SCALE
             thickness = config.TEXT_THICKNESS
@@ -205,7 +210,7 @@ class RecognitionEngine:
                 try:
                     raw_bytes = row['encoding']
                     vec = np.frombuffer(raw_bytes, dtype=np.float64)
-                    if len(vec) == 128:
+                    if len(vec) == 128 and np.isfinite(vec).all() and np.linalg.norm(vec) > 1e-10:
                         vec32 = vec.astype(np.float32)
                         enc_list.append(normalize_vector(vec32))
                         self.known_names.append(row['name'])
@@ -257,6 +262,12 @@ class RecognitionEngine:
         """
         threshold = self.threshold if threshold is None else threshold
 
+        query_vec = np.asarray(query_vec, dtype=np.float32)
+        if query_vec.shape != (128,) or not np.isfinite(query_vec).all() or np.linalg.norm(query_vec) <= 1e-10:
+            return False, "Unknown", 0.0, 2.0, None
+        if not np.isfinite(threshold) or not 0 < threshold < 2:
+            raise ValueError("Cosine threshold must be between 0 and 2")
+
         with self.lock:
             if len(self.known_matrix) == 0:
                 return False, "Unknown", 0.0, 2.0, None
@@ -266,15 +277,17 @@ class RecognitionEngine:
             best_idx = int(np.argmin(distances))
             min_dist = float(distances[best_idx])
 
-            # Check threshold
-            if min_dist <= threshold:
+            # A nearest neighbour is only a candidate, never an automatic assignment.
+            # Reject tied/near-tied identities regardless of database ordering.
+            runner_up = float(np.partition(distances, 1)[1]) if len(distances) > 1 else float("inf")
+            if min_dist <= threshold and runner_up - min_dist >= config.RECOGNITION_MIN_MARGIN:
                 name = self.known_names[best_idx]
                 ident_id = self.known_ids[best_idx]
                 # Display score only; not a calibrated probability or a policy threshold
                 confidence = max(0.0, min(1.0, 1.0 - (min_dist / (threshold * 1.5))))
                 return True, name, confidence, min_dist, ident_id
             else:
-                confidence = max(0.0, 1.0 - min_dist)
+                confidence = 0.0
                 return False, "Unknown", confidence, min_dist, None
 
     def process_frame(self, frame_bgr: np.ndarray) -> List[RecognizedFace]:
