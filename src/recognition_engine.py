@@ -143,7 +143,10 @@ class AnnotationOverlay:
         faces = self.get_active_faces()
 
         for face in faces:
-            color = config.COLOR_KNOWN_FACE if face.decision == "allow" else config.COLOR_UNKNOWN_FACE
+            display_only = face.reason == 'multiple_faces_display_only'
+            known = face.is_match and face.identity_id is not None
+            green = known if display_only else face.decision == "allow"
+            color = config.COLOR_KNOWN_FACE if green else config.COLOR_UNKNOWN_FACE
             b = face.box
 
             # Draw outer rectangle
@@ -161,7 +164,7 @@ class AnnotationOverlay:
                 action_label = "group contains unknown or duplicate identity"
             elif face.action_outcome == 'cooldown_suppressed':
                 action_label = f"cooldown {getattr(face, 'cooldown_remaining', 0):.1f}s"
-            label = f"{face.name}: {face.decision.upper()} / {action_label}"
+            label = (f"{face.name}: RECOGNISED" if known else "Unknown") if display_only else f"{face.name}: {face.decision.upper()} / {action_label}"
             font = cv2.FONT_HERSHEY_SIMPLEX
             scale = config.TEXT_FONT_SCALE
             thickness = config.TEXT_THICKNESS

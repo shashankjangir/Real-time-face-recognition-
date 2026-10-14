@@ -125,18 +125,17 @@ is kept during scrolling within the page and clamped when resizing the window.
 
 ### Field testing: glasses, lighting, and lookalikes
 
-The deployed frame policy requires three consecutive completed, fresh checks of
-exactly the same group of distinct matched identities. Missing faces, unknowns,
-ambiguous matches, a changed group, or more than two seconds between checks reset
-confirmation. Enrollment still requires exactly one face. A confirmed group can
-request one hardware action; repeat actions involving any member of that group
-are suppressed for ten seconds. Detection, streaming, and audit logging continue.
-The cooldown is in memory and resets on service restart. This is temporal
-confirmation, not proof that the identities are correct or that faces are live.
+For one visible person, access requires three consecutive fresh matches of the
+same identity. Unknowns, missing faces, multiple faces, a changed identity, or a
+gap longer than two seconds reset confirmation. Repeat actions are suppressed for
+ten seconds while detection, streaming, and single-person audit logging continue.
 
-All *detected* faces must match. A person missed by the detector cannot be checked;
-this group policy cannot establish that everyone physically present is authorized.
-The overlay shows confirmation progress and remaining cooldown.
+For multiple visible people, the system only displays individual recognition:
+enrolled matches are green with their names, and unknown faces are red. There is
+no group access decision, confirmation count, cooldown calculation, hardware action,
+or access-log entry for these display-only frames. Recognition still runs to
+identify each face. Spoken recognition announcements remain available. Enrollment
+still requires exactly one face. A return to one face starts confirmation anew.
 
 Glasses: the current database stores one active embedding per person. Capturing
 the same name again replaces that active embedding; it does not currently add a

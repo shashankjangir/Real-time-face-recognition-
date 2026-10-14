@@ -21,7 +21,7 @@ class DecisionCoordinator:
         self.confirmed_at = {}
 
     def apply_frame(self, faces, frame_id, session_id):
-        """Confirm a whole visible group; perform at most one hardware action per frame."""
+        """Confirm single-person access; multiple people are recognition display only."""
         with self.frame_lock:
             if frame_id <= self.last_frame.get(session_id, -1):
                 return
@@ -29,6 +29,16 @@ class DecisionCoordinator:
             if self.confirmation_session != session_id:
                 self.group, self.streak, self.last_check = (), 0, None
                 self.confirmation_session = session_id
+            if len(faces) > 1:
+                # Recognition already ran; do not calculate group access or cooldowns.
+                self.group, self.streak, self.last_check = (), 0, None
+                for face in faces:
+                    face.decision = 'observe'
+                    face.reason = 'multiple_faces_display_only'
+                    face.action_outcome = 'not_requested'
+                    face.confirmation_count = 0
+                    face.cooldown_remaining = 0
+                return faces
             now = time.monotonic()
             ids = [f.identity_id for f in faces]
             valid = bool(faces) and all(f.is_match and f.identity_id is not None for f in faces)
