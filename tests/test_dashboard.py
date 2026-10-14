@@ -105,3 +105,19 @@ class DashboardTests(unittest.TestCase):
         with patch.dict(sys.modules, {'picamera2':module}):
             Picamera2Backend().start()
         camera.set_controls.assert_called_once_with({'AeEnable':True, 'AwbEnable':True})
+
+    def test_live_announcements_use_fresh_faces_without_embeddings(self):
+        from src.recognition_engine import AnnotationOverlay, RecognizedFace
+        import time
+        overlay = AnnotationOverlay()
+        self.engine.overlay = overlay
+        known = RecognizedFace(self.box, np.ones(128), 'Alice', 1, 0, True, 1)
+        unknown = RecognizedFace(self.box, np.ones(128), 'Candidate', 0, 1, False, None)
+        overlay.update([known, unknown])
+        response = self.client.get('/api/recognition/live')
+        self.assertEqual(response.headers['Cache-Control'], 'no-store')
+        self.assertEqual(response.get_json()['faces'], [
+            dict(name='Alice', identity_id=1, recognized=True),
+            dict(name='Unknown', identity_id=None, recognized=False)])
+        overlay.timestamp = time.time()-2
+        self.assertEqual(self.client.get('/api/recognition/live').get_json()['faces'], [])

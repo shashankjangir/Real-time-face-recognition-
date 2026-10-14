@@ -100,6 +100,19 @@ def video_stream():
     return Response(runtime.stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+@app.route('/api/recognition/live')
+def api_live_recognition():
+    """Only fresh overlay results; never replay historical audit entries as speech."""
+    initialize_pipeline()
+    faces = recognition_engine.overlay.get_active_faces()
+    response = jsonify(status='success', faces=[dict(
+        name=f.name if f.is_match and f.identity_id is not None else 'Unknown',
+        identity_id=f.identity_id if f.is_match else None,
+        recognized=bool(f.is_match and f.identity_id is not None)) for f in faces])
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 @app.route('/api/stats')
 def api_stats():
     """Return JSON telemetry metrics."""

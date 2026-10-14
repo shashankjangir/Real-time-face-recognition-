@@ -29,3 +29,5 @@ html.has-camera-dock body{padding-bottom:var(--camera-dock-space,340px)}
 .camera-shell.is-floating:not(:fullscreen) .camera-top{cursor:grab;touch-action:none;user-select:none}
 .camera-shell.is-floating:not(:fullscreen) .camera-top:active{cursor:grabbing}
 .camera-top:focus-visible{outline:2px solid white;outline-offset:-3px}
+
+.camera-bottom>div{flex-wrap:wrap;gap:8px}

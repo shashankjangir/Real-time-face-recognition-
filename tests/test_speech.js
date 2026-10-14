@@ -1,0 +1,30 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs"), vm = require("node:vm");
+const context = {};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync("src/static/speech.js", "utf8") + "\nthis.VoiceAnnouncements = VoiceAnnouncements;", context);
+let now = 0, spoken = [], cancelled = 0, status = "";
+const host = {speechSynthesis: {getVoices: () => [{localService:true,lang:"en-IN"}],
+  speak: u => spoken.push(u.text), cancel: () => cancelled++},
+  SpeechSynthesisUtterance: class {constructor(text) {this.text=text;}}};
+const voice = new context.VoiceAnnouncements(host, s => status=s, () => now);
+const faces = [{recognized:true,identity_id:1,name:"Alice"},{recognized:false,identity_id:null,name:"Unknown"}];
+voice.recognitions(faces); assert.equal(spoken.length,0);
+voice.toggle(); voice.recognitions(faces);
+assert.equal(spoken.at(-1),"Alice, recognised. Unknown.");
+voice.recognitions(faces); assert.equal(spoken.length,2);
+now=10000; voice.recognitions(faces); assert.equal(spoken.length,3);
+voice.enrolled("Bob"); assert.equal(spoken.at(-1),"Bob, enrolled.");
+voice.recognitions([{recognized:true,identity_id:2,name:"Bob"}]); assert.equal(spoken.length,4);
+now=15000; voice.recognitions([]); assert.equal(spoken.length,4);
+host.speechSynthesis.speaking=true;
+voice.recognitions([{recognized:true,identity_id:2,name:"Bob"}]); assert.equal(spoken.length,4);
+host.speechSynthesis.speaking=false;
+voice.recognitions([{recognized:true,identity_id:2,name:"Bob"}]); assert.equal(spoken.at(-1),"Bob, recognised.");
+voice.toggle(); assert.equal(voice.enabled,false); assert.ok(cancelled>0);
+voice.enrolled("Silent"); assert.equal(spoken.length,5);
+host.speechSynthesis.getVoices=()=>[{localService:false,lang:"en"}]; voice.toggle();
+assert.match(status,/No local voice/); assert.equal(spoken.length,5);
+const unsupported = new context.VoiceAnnouncements({}, s=>status=s);
+unsupported.toggle(); assert.equal(unsupported.enabled,false);
+console.log("Speech tests passed: recognition, unknown, enrollment, cooldown, mute, queue bounds, local voice and unsupported browser.");

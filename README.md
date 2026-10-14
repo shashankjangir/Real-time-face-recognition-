@@ -135,3 +135,17 @@ excluded from Git.
 
 Project code and documentation are available under the [MIT License](LICENSE).
 Third-party libraries and pretrained model files retain their own licenses.
+
+
+### Spoken announcements
+
+Click **Enable voice** beside the live camera to hear "Name, recognised", "Unknown",
+and "Name, enrolled" after a successful enrollment in that browser. Audio plays on
+the device viewing the dashboard, not automatically through the Pi. Use **Mute voice**
+to stop it. An installed local browser/OS speech voice is required; if none is
+available the dashboard explains why. Voice is opt-in on each page load and pauses
+when the tab is hidden. Names and unknown announcements repeat at most once per ten
+seconds; empty frames and historical logs are not spoken. Recognition announcements
+identify matches, not authorization or confirmation that a door opened.
+
+Run speech logic checks with `node tests/test_speech.js` in addition to the Python suite.

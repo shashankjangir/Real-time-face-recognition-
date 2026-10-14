@@ -112,6 +112,7 @@ $("enroll-form").addEventListener("submit", async event => {
     setBusy(true, "Validating a fresh capture and saving the identity…");
     const data = await api("/api/enroll", {method:"POST", headers, body:JSON.stringify({name})});
     text("form-status", data.message + ". Capture quality: " + number(data.quality_score, 3) + ".");
+    announcements.enrolled(name);
     $("person-name").value = ""; $("admin-token").value = "";
     $("admin-token").type = "password"; text("show-token", "Show"); $("show-token").setAttribute("aria-pressed", "false");
     await updateStats();
@@ -225,3 +226,20 @@ dragHandle.addEventListener("keydown", event => {
   if (event.key === "Home") { event.preventDefault(); placeDock((innerWidth-box.width)/2, innerHeight-box.height-16); }
 });
 window.addEventListener("resize", () => { if (docked && dockPosition && !document.fullscreenElement) placeDock(dockPosition.x, dockPosition.y); });
+
+const announcements = new VoiceAnnouncements(window, message => text("speech-status", message));
+$("speech-toggle").addEventListener("click", () => {
+  announcements.toggle();
+  $("speech-toggle").setAttribute("aria-pressed", String(announcements.enabled));
+  text("speech-toggle", announcements.enabled ? "Mute voice" : "Enable voice");
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) announcements.cancel(); });
+window.addEventListener("pagehide", () => announcements.cancel());
+async function pollVoice() {
+  if (announcements.enabled && !document.hidden) {
+    try { const data = await api("/api/recognition/live"); if (!document.hidden) announcements.recognitions(data.faces); }
+    catch { announcements.cancel(); text("speech-status", "Live recognition unavailable; announcements paused."); }
+  }
+  setTimeout(pollVoice, 700);
+}
+pollVoice();
