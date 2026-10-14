@@ -96,16 +96,16 @@ class PipelineSafetyTests(unittest.TestCase):
             manager.get_frame()
         self.assertIsNone(manager.latest_frame)
 
-    def test_shared_cooldown_and_deduplication(self):
+    def test_shared_deduplication_without_cooldown(self):
         action = Mock()
         coordinator = DecisionCoordinator(self.db, action)
         with ThreadPoolExecutor(max_workers=4) as pool:
             list(pool.map(lambda _: coordinator.apply(self.face(), 1, 'test'), range(12)))
         coordinator.apply(self.face(), 2, 'test')
-        self.assertEqual(action.call_count, 1)
+        self.assertEqual(action.call_count, 2)
         logs = self.db.get_recent_logs()
         self.assertEqual(len(logs), 2)
-        self.assertEqual({x['action_outcome'] for x in logs}, {'succeeded', 'cooldown_suppressed'})
+        self.assertEqual({x['action_outcome'] for x in logs}, {'succeeded'})
         self.assertTrue(all(x['decision']=='allow' for x in logs))
         engine = RecognitionEngine(self.db)
         workers = [RecognitionWorker(i, FrameQueue(), engine, self.db, 'test') for i in range(4)]

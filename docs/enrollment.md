@@ -125,17 +125,17 @@ is kept during scrolling within the page and clamped when resizing the window.
 
 ### Field testing: glasses, lighting, and lookalikes
 
-For one visible person, access requires three consecutive fresh matches of the
-same identity. Unknowns, missing faces, multiple faces, a changed identity, or a
-gap longer than two seconds reset confirmation. Repeat actions are suppressed for
-ten seconds while detection, streaming, and single-person audit logging continue.
+For one visible person, access is evaluated immediately on each fresh recognition
+result. There is no three-match confirmation requirement or timed access cooldown.
+A configured hardware action may run on every new matched frame; duplicate and
+out-of-order frame protection still prevents replaying the same event.
 
 For multiple visible people, the system only displays individual recognition:
 enrolled matches are green with their names, and unknown faces are red. There is
 no group access decision, confirmation count, cooldown calculation, hardware action,
 or access-log entry for these display-only frames. Recognition still runs to
 identify each face. Spoken recognition announcements remain available. Enrollment
-still requires exactly one face. A return to one face starts confirmation anew.
+still requires exactly one face. A return to one face resumes immediate access evaluation.
 
 Glasses: the current database stores one active embedding per person. Capturing
 the same name again replaces that active embedding; it does not currently add a

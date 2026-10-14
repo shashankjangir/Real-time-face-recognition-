@@ -5,7 +5,7 @@ from src.access import DecisionCoordinator
 from src.database import DatabaseManager
 from src.recognition_engine import RecognizedFace, FaceBox
 
-class GroupConfirmationTests(unittest.TestCase):
+class FrameDecisionTests(unittest.TestCase):
     def setUp(self):
         self.db = DatabaseManager(':memory:')
         self.addCleanup(self.db.close)
@@ -22,36 +22,24 @@ class GroupConfirmationTests(unittest.TestCase):
             faces[-1].name = 'Unknown'
         return faces
 
-    def test_single_person_requires_three_and_action_once_then_cooldown(self):
-        with patch('src.access.time.monotonic', return_value=100):
-            for frame in (1,2):
-                faces = self.faces()[:1]
-                self.coordinator.apply_frame(faces, frame, 's')
-                self.assertTrue(all(f.decision == 'deny' for f in faces))
+    def test_single_person_is_immediate_without_cooldown(self):
+        for frame in range(1, 5):
             faces = self.faces()[:1]
-            self.coordinator.apply_frame(faces,3,'s')
-            self.assertTrue(all(f.decision == 'allow' for f in faces))
-            self.assertTrue(all(f.action_outcome == 'succeeded' for f in faces))
-            self.action.assert_called_once()
-        with patch('src.access.time.monotonic', return_value=101):
-            faces = self.faces()[:1]
-            self.coordinator.apply_frame(faces,4,'s')
-            self.assertTrue(all(f.action_outcome == 'cooldown_suppressed' for f in faces))
-            self.assertEqual(faces[0].cooldown_remaining,9)
-            self.action.assert_called_once()
+            self.coordinator.apply_frame(faces, frame, 's')
+            self.assertEqual(faces[0].decision, 'allow')
+            self.assertEqual(faces[0].action_outcome, 'succeeded')
+            self.assertEqual(self.action.call_count, frame)
 
-    def test_unknown_absence_and_multiple_faces_reset_confirmation(self):
-        for index, interrupt in enumerate(([], self.faces(True)[1:], self.faces())):
-            c = DecisionCoordinator(self.db, self.action)
-            session = str(index)
-            c.apply_frame(self.faces()[:1],1,session)
-            c.apply_frame(self.faces()[:1],2,session)
-            c.apply_frame(interrupt,3,session)
-            faces = self.faces()[:1]
-            c.apply_frame(faces,4,session)
-            self.assertEqual(faces[0].decision, 'deny')
-            self.assertEqual(c.streak, 1)
+    def test_unknown_and_empty_frames_do_not_act(self):
+        self.coordinator.apply_frame([], 1, 's')
+        unknown = self.faces(True)[1:]
+        self.coordinator.apply_frame(unknown, 2, 's')
+        self.assertEqual(unknown[0].decision, 'deny')
         self.action.assert_not_called()
+        known = self.faces()[:1]
+        self.coordinator.apply_frame(known, 3, 's')
+        self.assertEqual(known[0].decision, 'allow')
+        self.action.assert_called_once()
 
     def test_multiple_people_are_display_only_without_access_logs(self):
         for frame, unknown in enumerate((False, True, False, True), 1):
@@ -59,7 +47,6 @@ class GroupConfirmationTests(unittest.TestCase):
             self.coordinator.apply_frame(faces, frame, 's')
             self.assertTrue(all(f.decision == 'observe' for f in faces))
             self.assertTrue(all(f.reason == 'multiple_faces_display_only' for f in faces))
-            self.assertEqual(self.coordinator.streak, 0)
         self.action.assert_not_called()
         self.assertEqual(self.db.get_recent_logs(), [])
 
@@ -86,10 +73,4 @@ class GroupConfirmationTests(unittest.TestCase):
         self.coordinator.apply_frame(self.faces()[:1],5,'s')
         self.coordinator.apply_frame(self.faces()[:1],5,'s')
         self.coordinator.apply_frame(self.faces()[:1],4,'s')
-        self.assertEqual(self.coordinator.streak,1)
-
-    def test_gap_resets_and_cooldown_expires(self):
-        for frame, stamp in ((1,100),(2,100.1),(3,100.2),(4,111),(5,111.1),(6,111.2)):
-            with patch('src.access.time.monotonic',return_value=stamp):
-                self.coordinator.apply_frame(self.faces()[:1],frame,'s')
-        self.assertEqual(self.action.call_count,2)
+        self.action.assert_called_once()

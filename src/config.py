@@ -68,7 +68,6 @@ DB_POOL_TIMEOUT = 10.0
 # ============================================================================
 # ACCESS LOGGING & THROTTLING
 # ============================================================================
-LOG_COOLDOWN_SECONDS = 10  # Shared cooldown between actuator calls per identity
 LOG_CONFIDENCE_THRESHOLD = 0.50  # Legacy setting; policy uses RECOGNITION_THRESHOLD only
 
 # ============================================================================
@@ -112,6 +111,3 @@ LOG_LEVEL = "INFO"
 LOG_FILE = str(DATA_DIR / "access_system.log")
 LOG_MAX_BYTES = 5 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
-
-CONFIRMATION_FRAMES = 3
-CONFIRMATION_MAX_GAP_SECONDS = 2.0

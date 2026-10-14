@@ -158,12 +158,8 @@ class AnnotationOverlay:
                             'succeeded': 'action completed',
                             'failed': 'action failed',
                             'cooldown_suppressed': 'action cooldown'}.get(face.action_outcome, face.action_outcome)
-            if face.reason == 'awaiting_confirmation':
-                action_label = f"confirming {getattr(face, 'confirmation_count', 0)}/{config.CONFIRMATION_FRAMES}"
-            elif face.reason == 'multiple_faces':
-                action_label = "group contains unknown or duplicate identity"
-            elif face.action_outcome == 'cooldown_suppressed':
-                action_label = f"cooldown {getattr(face, 'cooldown_remaining', 0):.1f}s"
+            if face.reason == 'multiple_faces':
+                action_label = "multiple faces"
             label = (f"{face.name}: RECOGNISED" if known else "Unknown") if display_only else f"{face.name}: {face.decision.upper()} / {action_label}"
             font = cv2.FONT_HERSHEY_SIMPLEX
             scale = config.TEXT_FONT_SCALE
