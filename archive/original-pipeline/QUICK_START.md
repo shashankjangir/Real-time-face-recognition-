@@ -6,7 +6,7 @@
 ## 📋 **QUICK REFERENCE CARD**
 
 ### **System Requirements**
-- Raspberry Pi 5 (8GB RAM minimum)
+- Raspberry Pi 5 (4GB RAM minimum)
 - Pi Camera Module 3 (IMX708)
 - Raspberry Pi OS (Bookworm 64-bit)
 - 5.1V 5A USB-C power supply

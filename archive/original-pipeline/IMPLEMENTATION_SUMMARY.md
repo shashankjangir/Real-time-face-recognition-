@@ -296,7 +296,7 @@ http://<PI_IP>:5000
 
 ## 📈 Benchmark Results
 
-**Reference System: Raspberry Pi 5 (8GB RAM)**
+**Reference System: Raspberry Pi 5 (4GB RAM)**
 
 | Metric | Result | Target | Status |
 |--------|--------|--------|--------|

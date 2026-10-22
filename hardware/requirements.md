@@ -9,12 +9,12 @@ that the required hardware is already available. Quantities are for one unit.
 
 | Part | Quantity | Requirement / purpose |
 | --- | --- | --- |
-| Raspberry Pi 5 | 1 | Record installed RAM and board revision in the deployment record |
+| Raspberry Pi 5 | 1 | Raspberry Pi 5 (4GB RAM) |
 | Raspberry Pi Camera Module 3 | 1 | Record standard/wide and visible-light/NoIR variant |
 | Pi 5 camera cable | 1 | 22-pin Pi end to 15-pin Camera Module 3 end; appropriate length |
 | USB-C power supply | 1 | Suitable 5V/5A supply; official 27W supply is a supported starting choice |
 | Active cooling | 1 | Pi 5-compatible cooler with clearance and airflow |
-| Storage | 1 | microSD with 64-bit Raspberry Pi OS; 32-64GB is a practical starting capacity |
+| Storage | 1 | microSD with 64-bit Raspberry Pi OS; 64GB microSD card installed |
 | Stable lighting | As needed | Even illumination at the capture position; avoid strong backlighting |
 | Camera mount and standoffs | 1 set | Hold the camera steady and avoid cable strain or PCB shorts |
 | Breadboard and jumper wires | 1 set | Low-current signal prototyping; select connectors for the actual modules |

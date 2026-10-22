@@ -16,7 +16,6 @@ def main():
         config.REPORTS_DIR = storage / "reports"
         config.KNOWN_FACES_DIR = storage / "known_faces"
         config.DATABASE_FILE = str(storage / "tests.db")
-        config.ENCODINGS_FILE = str(storage / "encodings.pkl")
         config.ENCODINGS_JSON_FILE = str(storage / "encodings.json")
         config.LOG_FILE = str(storage / "tests.log")
         config.CAMERA_BACKEND = "synthetic"

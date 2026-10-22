@@ -7,6 +7,16 @@ threaded acquisition, vectorized cosine matching, and searchable authentication
 history. Enrollment requires administrator authentication, exactly one detected
 face, and measured image quality.
 
+
+## Project Generations
+
+This repository includes two generations of the real-time access system:
+
+* **[Generation 1: dlib (HOG + ResNet-128D)](gen-1-dlib/)**: The stable baseline utilizing dlib's metric learning pipeline, software tilt rotational pyramid search, and Apple design dashboard.
+* **[Generation 2: SCRFD (InsightFace + ONNX Runtime)](gen-2-scrfd/)**: The next-generation high-speed pipeline utilizing SCRFD-500M ONNX inference. Runs at **60+ FPS (<8 ms)** on Raspberry Pi 5 CPU with native 5-keypoint detection and hardware tilt tolerance.
+
+---
+
 ## Features
 
 - Picamera2 and USB camera backends, plus a synthetic development stream.
@@ -149,3 +159,68 @@ seconds; empty frames and historical logs are not spoken. Recognition announceme
 identify matches, not authorization or confirmation that a door opened.
 
 Run speech logic checks with `node tests/test_speech.js` in addition to the Python suite.
+
+---
+
+## Update Log
+
+### [2026-10-21 17:52 IST] — Apple Design System & Face ID Core Architecture Update
+
+- **Apple Design System Redesign**:
+  - Restyled web dashboard (`src/templates/dashboard.html`, `src/static/dashboard.css`) according to Apple's design reference: Frost canvas (`#f5f5f7`), hairline dividers (`#d2d2d7`), Apple Blue (`#0071e3`) interactive switches, SF Pro type scale, flat elevation, and rounded pill controls (`980px` radius).
+- **Eye Aspect Ratio (EAR) Liveness & Attention Verification**:
+  - Added `calculate_ear()` and `check_attention()` in `src/recognition_engine.py` using 6-point eye landmarks.
+  - Enforced in `src/access.py`: denies inattentive or closed-eye attempts (photo-spoof mitigation) with decision reason `attention_required`.
+- **Multi-Sample Angular Centroid Enrollment**:
+  - Added `create_robust_template()` in `src/enroll.py` and `--images` CLI argument in `enroll.py`.
+  - Supports multi-pose angular captures (e.g. left, center, right) to generate a normalized 128D centroid embedding for enrollment.
+- **Continuous Biometric Template Adaptation**:
+  - Added `adapt_identity_template()` in `src/database.py` and `adapt_memory_template()` in `src/recognition_engine.py`.
+  - Automatically updates stored identity embeddings via Exponential Moving Average ($0.95 \cdot v_{\text{old}} + 0.05 \cdot v_{\text{new}}$) whenever a verified match has high confidence (cosine distance $\le 0.04$).
+- **360° Tilt-Invariant Face Recognition**:
+  - Implemented multi-angle rotational pyramid search `(-30°, 30°, -60°, 60°, -90°, 90°, 180°, -120°, 120°)` with fast zero-copy $2\times$ downsampling (`rgb[::2, ::2]`).
+  - Added `unrotate_box()` trigonometric mapping to un-rotate bounding boxes back to original camera coordinates.
+  - Added angle caching (`self.last_tilt_angle`) so subsequent frames of a tilted face incur zero search latency overhead.
+- **Automated Verification**:
+  - Added test suite `tests/test_apple_features.py` testing attention rejection, multi-sample enrollment, continuous adaptation, and tilt-invariant detection.
+
+
+### [2026-10-21 18:00 IST] — Hardware Profile Specification (4GB RAM & 64GB Storage)
+
+- **Target Hardware Calibration**:
+  - Calibrated physical hardware profile to **Raspberry Pi 5 (4GB RAM)** across all documentation, requirements sheets, and architectural guides (corrected from earlier 8GB references).
+  - Standardized storage media specification to a **64GB microSD card** running 64-bit Raspberry Pi OS in hardware/requirements.md and hardware/deployment.example.md.
+
+### [2026-10-21 18:30 IST] — Multi-Generation Project Structure (Gen 1 dlib & Gen 2 SCRFD)
+
+- **Generation Folders Created**:
+  - `gen-1-dlib/`: Preserved complete baseline pipeline running dlib HOG + 128D ResNet.
+  - `gen-2-scrfd/`: Upgraded pipeline running InsightFace SCRFD ONNX Runtime detector (<8ms latency, 60+ FPS, native 5-point facial landmarks).
+- **Requirements & Documentation**:
+  - Added `onnxruntime` dependency and `src/scrfd.py` ONNX engine to `gen-2-scrfd/`.
+  - Updated all documentation in `gen-2-scrfd/` (`README.md`, `docs/architecture.md`) reflecting SCRFD progress.
+
+### [2026-10-21 19:25 IST] — Raspberry Pi 5 Deployment Readiness & Raspberry Pi Terminal Guide (`guide_raspberry.md`)
+
+- **Raspberry Pi 5 Deployment Guide Created**:
+  - Authored comprehensive terminal guide [`guide_raspberry.md`](guide_raspberry.md) covering end-to-end deployment for **Raspberry Pi 5 (4GB RAM, 64GB MicroSD)** running Raspberry Pi OS (64-bit Bookworm).
+  - Documents SSH remote connection, CSI camera verification (`rpicam-hello --list-cameras`), USB webcam diagnostics (`v4l2-ctl`), virtual environment configuration with `--system-site-packages` for `picamera2`, parallelized `dlib` compilation, running Gen-2 SCRFD / Gen-1 dlib, browser dashboard access, CLI enrollment, and production `systemd` autostart configuration (`face-access.service`).
+- **Automated Linux Setup Script**:
+  - Created [`setup_rpi.sh`](setup_rpi.sh) for 1-command installation of system dependencies, Picamera2/libcamera, Python wheels (`setuptools<70`), and ONNX Runtime models on Raspberry Pi.
+- **Dedicated Raspberry Pi Execution Scripts**:
+  - Added executable Bash scripts [`gen-2-scrfd/run.sh`](gen-2-scrfd/run.sh) and [`gen-1-dlib/run.sh`](gen-1-dlib/run.sh) pre-configured with `CAMERA_BACKEND=auto`, `ADMIN_ENROLLMENT_TOKEN=admin123`, and UTF-8 encoding.
+- **Windows Runner & Terminal Compatibility**:
+  - Added Windows runners (`run.ps1` and `run.bat`) for both generations, resolved `cp1252` terminal encoding, and fixed `setuptools>=70` `pkg_resources` compatibility issue.
+
+### [2026-10-22 12:05 IST] — SQLite Concurrency Protection & Pipeline Safety Hardening
+
+- **SQLite WAL Concurrency & Flash Wear Protection**:
+  - Added rate-limiting to `adapt_identity_template()` in `src/database.py` with thread-safe timestamp tracking (`min_interval=10.0s`). Prevents SQLite write-lock contention and excessive flash memory wear under continuous 30 FPS video streaming.
+  - Verified with unit tests in `tests/test_apple_features.py` ensuring single-call execution while debouncing high-frequency frames.
+- **Fail-Fast Camera & Recognition Safety**:
+  - Hardened `CameraManager` hardware verification on instantiation, ensuring proper failure propagation and zero silent fallback to synthetic streams.
+  - Fixed class-level attribute fallback for `last_tilt_angle` in `src/recognition_engine.py` for decoupled test runner instances.
+- **Compatibility Entry Point Restored**:
+  - Restored `recognize_stream.py` as a lightweight compatibility launch shim forwarding to `app.py`.
+- **Documentation Verification**:
+  - Validated all cross-document markdown links across all root, gen-1, gen-2, hardware, and archive READMEs.

@@ -1,0 +1,14 @@
+# ============================================================================
+# Real-Time Facial Recognition & Access Control System - Dependencies
+# ============================================================================
+
+# Core Computer Vision, Metric Learning & Web Server
+opencv-python>=4.8.0
+numpy>=1.24.0
+flask>=3.0.0
+
+# Raspberry Pi 5 & Edge Hardware Packages (Linux / Pi OS Debian Bookworm)
+# On Raspberry Pi 5, install via:
+# sudo apt install -y python3-picamera2 python3-opencv cmake build-essential libopenblas-dev
+# Use a virtual environment with --system-site-packages.
+# See docs/raspberry-pi-setup.md for the complete installation commands.

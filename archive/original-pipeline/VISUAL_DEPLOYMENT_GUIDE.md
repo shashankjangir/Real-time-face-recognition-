@@ -116,7 +116,7 @@ Breakdown:
 ## **INSTALLATION DEPENDENCY TREE**
 
 ```
-Raspberry Pi 5 (8GB RAM)
+Raspberry Pi 5 (4GB RAM)
 │
 ├─ System Libraries
 │  ├─ cmake, build-essential
@@ -181,7 +181,7 @@ scp -r C:\Real-time-face-recognition-\26-08-2006\* smartsnake@snakerobo.local:~/
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Raspberry Pi 5 (8GB RAM)                                    │
+│  Raspberry Pi 5 (4GB RAM)                                    │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Facial Recognition System                            │   │

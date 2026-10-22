@@ -39,7 +39,7 @@ class Picamera2Backend(CameraBackend):
             from picamera2 import Picamera2
             self.picam2 = Picamera2()
             cam_config = self.picam2.create_video_configuration(
-                main={"format": "RGB888", "size": (self.width, self.height)},
+                main={"format": "BGR888", "size": (self.width, self.height)},
                 controls={"FrameRate": self.fps}
             )
             self.picam2.configure(cam_config)
@@ -63,7 +63,7 @@ class Picamera2Backend(CameraBackend):
         if not self.picam2:
             return False, None
         try:
-            # Picamera2 RGB888 already yields BGR byte order for OpenCV.
+            # BGR888 format yields native OpenCV byte order; no conversion needed.
             return True, self.picam2.capture_array()
         except Exception as e:
             logger.error(f"Picamera2 capture error: {e}")
@@ -182,7 +182,7 @@ class CameraManager:
 
     def __init__(self, backend_type: str = None):
         self.backend_type = backend_type or config.CAMERA_BACKEND
-        self.backend: CameraBackend = self._initialize_backend()
+        self.backend: CameraBackend = self._create_backend()
 
         self.latest_frame: Optional[np.ndarray] = None
         self.frame_lock = threading.Lock()
@@ -195,7 +195,8 @@ class CameraManager:
         self._fps_tracker = []
         self.last_error = None
 
-    def _initialize_backend(self) -> CameraBackend:
+    def _create_backend(self) -> CameraBackend:
+        """Instantiate and start camera backend; auto probes picamera2 then opencv."""
         choices = {'picamera2': Picamera2Backend, 'opencv': OpenCVBackend, 'synthetic': SyntheticBackend}
         if self.backend_type not in (*choices, 'auto'):
             raise RuntimeError(f"Unknown camera backend: {self.backend_type}")
@@ -211,6 +212,8 @@ class CameraManager:
                 errors.append(f"{name}: {exc}")
         raise RuntimeError("Camera initialization failed: " + "; ".join(errors))
 
+    _initialize_backend = _create_backend
+
     def start(self):
         """Start background acquisition thread."""
         if self.running:
@@ -223,6 +226,7 @@ class CameraManager:
     def _capture_loop(self):
         last_t = time.time()
         while self.running:
+            time.sleep(0.001)  # prevent 100% CPU spin when backend.read() returns instantly
             try:
                 success, frame = self.backend.read()
                 if not success or frame is None:
@@ -235,20 +239,18 @@ class CameraManager:
                 logger.error("Camera capture failed: %s", exc)
                 break
             if success and frame is not None:
+                now = time.time()
+                dt = now - last_t
+                last_t = now
                 with self.frame_lock:
                     self.delivered_at = time.monotonic()
                     self.latest_frame = frame
                     self.frame_count += 1
-
-                # Calculate real-time capture FPS
-                now = time.time()
-                dt = now - last_t
-                last_t = now
-                if dt > 0:
-                    self._fps_tracker.append(1.0 / dt)
-                    if len(self._fps_tracker) > 30:
-                        self._fps_tracker.pop(0)
-                    self.fps = sum(self._fps_tracker) / len(self._fps_tracker)
+                    if dt > 0:
+                        self._fps_tracker.append(1.0 / dt)
+                        if len(self._fps_tracker) > 30:
+                            self._fps_tracker.pop(0)
+                        self.fps = sum(self._fps_tracker) / len(self._fps_tracker)
             else:
                 time.sleep(0.01)
 
@@ -267,7 +269,8 @@ class CameraManager:
             return (*snapshot, self.delivered_at) if timestamped else snapshot
 
     def get_fps(self) -> float:
-        return round(self.fps, 1)
+        with self.frame_lock:
+            return round(self.fps, 1)
 
     def stop(self):
         self.running = False

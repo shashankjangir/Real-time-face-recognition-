@@ -17,9 +17,9 @@ recorded in this repository yet.
 
 ```mermaid
 flowchart LR
-    Supply[USB-C power supply] --> Pi[Raspberry Pi 5]
+    Supply[USB-C power supply] --> Pi[Raspberry Pi 5 (4GB RAM)]
     Camera[Camera Module 3] -->|Pi 5 camera cable| Pi
-    Storage[microSD / OS and local data] --- Pi
+    Storage[64GB microSD / OS and local data] --- Pi[Raspberry Pi 5 (4GB RAM)]
     Pi -->|I2C, if supported by display| OLED[Status OLED]
     Pi -->|Configured GPIO control| Driver[Optional relay / MOSFET driver]
     LockSupply[Rated actuator supply] --> Driver
@@ -36,3 +36,9 @@ preconfigured pin driver.
 Copy `deployment.example.md` to `deployment.local.md` for private installation
 notes. Local deployment records and `hardware/local/` are ignored by Git. Publish
 only reviewed, non-sensitive diagrams or photographs without enrolled faces.
+
+
+---
+
+### Update Log
+- **[2026-10-21 18:00 IST]**: Specified active hardware target as **Raspberry Pi 5 (4GB RAM)** with **64GB microSD** storage card.

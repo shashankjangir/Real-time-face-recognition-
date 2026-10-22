@@ -4,10 +4,11 @@ from . import config
 
 
 class DecisionCoordinator:
-    def __init__(self, db, action=None, enabled=True):
+    def __init__(self, db, action=None, enabled=True, engine=None):
         self.db = db
         self.action = action  # Callable(face); raises on failure. None never claims actuation.
         self.enabled = enabled
+        self.engine = engine
         self.lock = threading.Lock()
         self.failure = None
         self.frame_lock = threading.Lock()
@@ -38,16 +39,27 @@ class DecisionCoordinator:
             if prior:
                 face.decision, face.reason, face.action_outcome = prior['decision'], prior['reason'], prior['action_outcome']
                 return face
-            allow = not self.failure and self.enabled and face.is_match and face.identity_id is not None and not multiple_faces
+            attentive = getattr(face, 'is_attentive', True)
+            allow = not self.failure and self.enabled and face.is_match and face.identity_id is not None and not multiple_faces and attentive
             face.decision = 'allow' if allow else 'deny'
             face.reason = ('pipeline_failure' if self.failure else 'simulation_disabled' if not self.enabled else 'multiple_faces' if multiple_faces
-                           else 'identity_matched' if allow else 'identity_not_matched')
+                           else 'attention_required' if not attentive else 'identity_matched' if allow else 'identity_not_matched')
             outcome = ('not_requested' if not allow else 'not_configured' if self.action is None
                        else 'pending')
             log_id = self.db.log_recognition(face.identity_id, face.name, face.confidence,
                 face.match_distance, 'verified' if allow else 'rejected', frame_id, session_id,
                 config.FACE_DETECTION_MODEL, decision=face.decision, reason=face.reason,
                 action_outcome=outcome, event_key=key)
+
+            # Apple continuous template adaptation on high-confidence match
+            if allow and face.match_distance <= config.RECOGNITION_THRESHOLD / 2.0:
+                if hasattr(self.db, 'adapt_identity_template'):
+                    try:
+                        self.db.adapt_identity_template(face.identity_id, face.encoding)
+                        if self.engine and hasattr(self.engine, 'adapt_memory_template'):
+                            self.engine.adapt_memory_template(face.identity_id, face.encoding)
+                    except Exception:
+                        pass
             if outcome == 'pending':
                 # Persist intent before invoking hardware.
                 detail = None

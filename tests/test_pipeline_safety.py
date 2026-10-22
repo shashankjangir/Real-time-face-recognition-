@@ -87,7 +87,7 @@ class PipelineSafetyTests(unittest.TestCase):
     def test_runtime_camera_failure_clears_frame(self):
         backend = Mock()
         backend.read.return_value = (False, None)
-        with patch.object(CameraManager, '_initialize_backend', return_value=backend):
+        with patch.object(CameraManager, '_create_backend', return_value=backend):
             manager = CameraManager()
         manager.latest_frame = np.ones((2,2,3))
         manager.running = True

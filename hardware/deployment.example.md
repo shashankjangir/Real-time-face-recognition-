@@ -7,11 +7,11 @@ face images or embeddings in this template. Blank fields mean not recorded.
 
 | Field | Installed value |
 | --- | --- |
-| Pi 5 RAM / revision | |
+| Pi 5 RAM / revision | 4GB RAM |
 | Camera Module 3 variant / cable length | |
 | Power supply model / rating | |
 | Cooler | |
-| Storage / capacity | |
+| Storage / capacity | 64GB microSD |
 | OS version / architecture | |
 | OLED model / controller / interface / resolution | |
 | OLED address / supply voltage | |

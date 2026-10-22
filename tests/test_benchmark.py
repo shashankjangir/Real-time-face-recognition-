@@ -134,9 +134,8 @@ class BenchmarkTests(unittest.TestCase):
         db = Mock()
         records = [dict(split='enroll', name='Alice', image='photo')]
         embedding = np.ones(128, dtype=np.float32)
-        with patch.object(benchmark, 'RecognitionEngine', return_value=engine), patch.object(benchmark, 'read_image', return_value=np.zeros((10, 10, 3))), patch.object(benchmark, 'validate_enrollment_frame', return_value=(embedding, 0.8)), patch('src.enroll.sync_to_pickle') as sync:
+        with patch.object(benchmark, 'RecognitionEngine', return_value=engine), patch.object(benchmark, 'read_image', return_value=np.zeros((10, 10, 3))), patch.object(benchmark, 'validate_enrollment_frame', return_value=(embedding, 0.8)):
             self.assertIs(benchmark.build_gallery(records, db), engine)
-            sync.assert_not_called()
         db.add_identity.assert_called_once()
         self.assertEqual(db.add_identity.call_args.kwargs['quality_score'], 0.8)
         engine.reload_identities.assert_called_once()

@@ -117,7 +117,7 @@ This is a **production-ready facial recognition system** built for Raspberry Pi 
 
 | Component | Specification |
 |-----------|---------------|
-| **Board** | Raspberry Pi 5 (8GB RAM minimum) |
+| **Board** | Raspberry Pi 5 (4GB RAM minimum) |
 | **Camera** | Pi Camera Module 3 (IMX708, 4608×2592) |
 | **OS** | Raspberry Pi OS (Debian Bookworm 64-bit) |
 | **Power** | 5.1V 5A USB-C (recommended) |
@@ -465,7 +465,7 @@ python3 database.py
 
 ## 📝 Performance Benchmarks
 
-### Reference System: Raspberry Pi 5 (8GB)
+### Reference System: Raspberry Pi 5 (4GB)
 
 | Metric | Observed | Target | Status |
 |--------|----------|--------|--------|

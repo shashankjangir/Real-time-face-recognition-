@@ -15,7 +15,7 @@ import src.config as config
 if __name__ == '__main__':
     initialize_pipeline()
     print("\n" + "=" * 70)
-    print("🎥 REAL-TIME FACIAL RECOGNITION & ACCESS CONTROL SYSTEM")
+    print(">>> REAL-TIME FACIAL RECOGNITION & ACCESS CONTROL SYSTEM")
     print("   Architecture: Raspberry Pi 5 / Edge (128D Deep Metric Learning)")
     print(f"   Web Dashboard: http://{config.WEB_HOST}:{config.WEB_PORT}")
     print(f"   Database:      {config.DATABASE_FILE} (SQLite + WAL)")

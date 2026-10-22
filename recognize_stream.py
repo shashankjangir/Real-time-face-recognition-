@@ -1,22 +1,14 @@
 """
-Real-Time Facial Recognition & Streaming Server
-Backward-compatible root entry point for recognize_stream.py
+Compatibility launch entry point forwarding to app.py.
+Preserved for backward compatibility with existing deployment scripts and documentation.
 """
-
-import os
-import sys
-
-# Add src to sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from src.app import app, initialize_pipeline
-import src.config as config
+from app import app, initialize_pipeline, config
 
 if __name__ == '__main__':
     initialize_pipeline()
     print("\n" + "=" * 70)
-    print("🎥 REAL-TIME FACIAL RECOGNITION & STREAMING SERVER")
-    print(f"   Dashboard: http://{config.WEB_HOST}:{config.WEB_PORT}")
+    print(">>> REAL-TIME FACIAL RECOGNITION & ACCESS CONTROL SYSTEM (COMPATIBILITY LAUNCH)")
+    print(f"   Web Dashboard: http://{config.WEB_HOST}:{config.WEB_PORT}")
     print("=" * 70 + "\n")
 
     app.run(

@@ -68,7 +68,6 @@ DB_POOL_TIMEOUT = 10.0
 # ============================================================================
 # ACCESS LOGGING & THROTTLING
 # ============================================================================
-LOG_CONFIDENCE_THRESHOLD = 0.50  # Legacy setting; policy uses RECOGNITION_THRESHOLD only
 
 # ============================================================================
 # WEB SERVER & MJPEG STREAMING
@@ -85,7 +84,6 @@ MJPEG_FRAME_RATE = 25  # Target stream display FPS
 # ============================================================================
 # FILES & ENCODINGS CACHE
 # ============================================================================
-ENCODINGS_FILE = str(DATA_DIR / "encodings.pkl")
 ENCODINGS_JSON_FILE = str(DATA_DIR / "encodings.json")
 
 # ============================================================================

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f5f7">
+<title>Face / Access — Live Station</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+<script defer src="{{ url_for('static', filename='speech.js') }}"></script>
+<script defer src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</head>
+<body data-quality-threshold="{{ quality_threshold }}">
+<a class="skip" href="#live">Skip to camera</a>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="wordmark" href="#" aria-label="Face Access home">
+      <span class="apple-glyph" aria-hidden="true">􀌬</span>
+      <span>Face / Access</span>
+    </a>
+    <nav aria-label="Main">
+      <a href="#live">Live</a>
+      <a href="#enrollment">Enrollment</a>
+      <a href="#history">History</a>
+    </nav>
+    <span class="connection" id="connection" role="status">Connecting ○</span>
+  </div>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="page-title">
+    <div class="hero-content">
+      <p class="eyebrow">STATION 01 · REAL-TIME ACCESS</p>
+      <h1 id="page-title">A familiar face.</h1>
+      <p class="tagline">Recognition at the point of entry.</p>
+      <p class="hero-copy muted">Edge metric learning on Raspberry Pi 5. One camera, 128D embeddings, and instant verification.</p>
+      <div class="hero-actions">
+        <a class="pill" href="#enrollment">Enroll an identity</a>
+        <a class="pill outline" href="#live">View live camera</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="system-message" id="system-message" role="status" hidden></div>
+
+  <section id="live" class="section-block" aria-labelledby="live-title">
+    <div class="section-header">
+      <div>
+        <p class="section-label">OBSERVATION</p>
+        <h2 id="live-title">Live Observation</h2>
+      </div>
+      <span class="header-badge" id="camera-description">Waiting for camera</span>
+    </div>
+
+    <div class="observation">
+      <div class="camera-slot" id="camera-slot">
+        <div class="camera-shell" id="camera-shell">
+          <div class="camera-top">
+            <span id="feed-label">CAM 01 · CONNECTING</span>
+            <span id="clock">—</span>
+          </div>
+          <div class="camera-stage">
+            <img id="feed" alt="Live access-camera feed" hidden>
+            <div class="feed-empty" id="feed-empty">
+              <span class="focus-mark" aria-hidden="true">[ + ]</span>
+              <h3 id="feed-empty-title">Connecting to your camera</h3>
+              <p id="feed-empty-text">The live feed will appear here when the station is available.</p>
+              <button class="pill outline" id="retry" type="button">Reconnect</button>
+            </div>
+          </div>
+          <div class="camera-bottom">
+            <span>Live view / local processing</span>
+            <div class="camera-controls">
+              <button class="camera-control" id="speech-toggle" type="button" aria-pressed="false">Enable voice</button>
+              <button class="camera-control" id="pause" type="button" aria-pressed="false">Pause view</button>
+              <button class="camera-control" id="fullscreen" type="button">Full screen ↗</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="specifications" aria-label="Station measurements">
+        <div class="spec-card">
+          <div class="spec-heading">STATION READOUT</div>
+          <div class="spec-list">
+            <div class="spec">
+              <div class="spec-meta">
+                <span class="spec-title">Enrolled identities</span>
+                <small>Active in gallery</small>
+              </div>
+              <button class="stat stat-button" id="identities-open" aria-label="View enrolled identities">—</button>
+            </div>
+            <div class="spec">
+              <div class="spec-meta">
+                <span class="spec-title">Camera capture</span>
+                <small>Frames / second</small>
+              </div>
+              <strong class="stat" id="capture-fps">—</strong>
+            </div>
+            <div class="spec">
+              <div class="spec-meta">
+                <span class="spec-title">Recognition</span>
+                <small>Completed frames / sec</small>
+              </div>
+              <strong class="stat" id="recognition-fps">—</strong>
+            </div>
+            <div class="spec">
+              <div class="spec-meta">
+                <span class="spec-title">Decision latency</span>
+                <small>Mean / milliseconds</small>
+              </div>
+              <strong class="stat" id="latency">—</strong>
+            </div>
+          </div>
+          <div class="spec-foot">
+            <span id="speech-status" role="status">Voice is off. Enable it to hear recognition and enrollment.</span>
+            <span id="focus-state">Focus mode unavailable</span>
+            <span id="metric-note">Measurements appear when the station connects.</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <details class="telemetry">
+      <summary>Measurement details <span>+</span></summary>
+      <dl>
+        <div><dt>Encoded video</dt><dd id="jpeg-fps">—</dd></div>
+        <div><dt>Queue / stale / dropped</dt><dd id="drops">—</dd></div>
+        <div><dt>Recognition accuracy</dt><dd>Not measured</dd></div>
+      </dl>
+      <p>Rates are measured since startup. Latency uses the latest completed frames and includes queue wait and audit work. An identity match is a policy decision; the audit records the separate hardware action outcome.</p>
+    </details>
+  </section>
+
+  <section id="enrollment" class="section-block" aria-labelledby="enrollment-title">
+    <div class="section-header">
+      <div>
+        <p class="section-label">IDENTITY CREATION</p>
+        <h2 id="enrollment-title">Enrollment</h2>
+      </div>
+      <span class="header-badge">One person. One clear capture.</span>
+    </div>
+
+    <div class="enrollment-grid">
+      <div class="enrollment-card">
+        <h3>Make an introduction.</h3>
+        <p class="muted">Face the camera, stay near the centre and hold still. Check your capture quality before adding an identity.</p>
+        <form id="enroll-form">
+          <div class="form-field">
+            <label for="person-name">Identity name</label>
+            <input id="person-name" name="name" placeholder="Full name" maxlength="120" required autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label for="admin-token">Administrator token</label>
+            <div class="token-field">
+              <input id="admin-token" type="password" placeholder="Enter administrator token" autocomplete="off" required>
+              <button class="ghost-btn" id="show-token" type="button" aria-pressed="false">Show</button>
+            </div>
+            <p class="field-note">Used for this session only. Never saved in your browser.</p>
+          </div>
+          <div class="form-actions">
+            <button class="pill" id="enroll-button" type="submit">Capture & enroll</button>
+            <button class="pill outline" id="quality-check" type="button">Check face quality</button>
+          </div>
+          <p id="form-status" class="form-status" role="status" aria-live="polite">Enrollment checks a fresh frame before saving.</p>
+        </form>
+      </div>
+
+      <div class="quality-card">
+        <div class="quality-heading">
+          <span>CAPTURE QUALITY</span>
+          <span class="status-pill" id="quality-state">NOT CHECKED</span>
+        </div>
+        <div class="quality-number">
+          <strong id="quality-score">—</strong>
+          <div class="quality-fraction">
+            <span>/ 1.00</span>
+            <small>Required: {{ '%.2f'|format(quality_threshold) }}</small>
+          </div>
+        </div>
+        <div class="quality-meter">
+          <div id="quality-fill"></div>
+          <span style="left: {{ quality_threshold * 100 }}%" title="Enrollment threshold"></span>
+        </div>
+        <div class="quality-components">
+          <div>
+            <span>Sharpness <small>40% weight</small></span>
+            <span id="q-sharpness">—</span>
+          </div>
+          <div>
+            <span>Brightness <small>30% weight</small></span>
+            <span id="q-brightness">—</span>
+          </div>
+          <div>
+            <span>Face size <small>30% weight</small></span>
+            <span id="q-size">—</span>
+          </div>
+        </div>
+        <ul id="quality-tips">
+          <li>Check face quality to see what needs attention. A quality score is a capture heuristic, not recognition accuracy.</li>
+        </ul>
+        <p class="field-note" id="quality-time">No capture checked yet.</p>
+        <details class="capture-help">
+          <summary>Having trouble with focus?</summary>
+          <p>Use steady, diffuse light in front of you. A direct phone flash can overexpose your face. Keep the lens clean, avoid being very close, and allow continuous autofocus to settle.</p>
+          <p>A score below the threshold may be caused by blur, lighting or a small face crop. Use the individual readings above to decide what to change.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="history" class="section-block" aria-labelledby="history-title">
+    <div class="section-header">
+      <div>
+        <p class="section-label">AUDIT TRAIL</p>
+        <h2 id="history-title">Decision History</h2>
+      </div>
+      <button class="pill outline" id="refresh-history" type="button">Refresh ↻</button>
+    </div>
+
+    <div class="history-toolbar">
+      <div class="history-filters">
+        <div class="filter-group">
+          <label for="history-name">Identity filter</label>
+          <input id="history-name" type="search" placeholder="Exact name" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <label for="history-hours">Period</label>
+          <select id="history-hours">
+            <option value="1">Last hour</option>
+            <option value="24" selected>Last 24 hours</option>
+            <option value="168">Last 7 days</option>
+          </select>
+        </div>
+      </div>
+      <a class="pill outline" id="export" href="/api/csv?hours=24">Export period CSV ↗</a>
+    </div>
+
+    <p id="history-status" class="field-note" role="status">Loading recent decisions.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Time</th>
+            <th scope="col">Identity</th>
+            <th scope="col">Decision</th>
+            <th scope="col">Reason</th>
+            <th scope="col">Action Outcome</th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <tr><td colspan="5" class="table-empty">Waiting for the station.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <span class="footer-wordmark">Face / Access</span>
+      <p class="footer-copy">Edge metric facial recognition and local policy coordination.</p>
+    </div>
+    <div class="footer-col footer-right">
+      <span>Raspberry Pi 5 · Camera Module 3 · SQLite WAL</span>
+      <a class="ghost-link" href="#">Back to top ↑</a>
+    </div>
+  </div>
+</footer>
+
+<dialog id="identity-dialog" aria-labelledby="identity-title">
+  <div class="dialog-heading">
+    <h2 id="identity-title">Enrolled Identities</h2>
+    <button class="dialog-close" id="identities-close" type="button" aria-label="Close dialog">✕</button>
+  </div>
+  <p class="muted">Current gallery stored in vectorized memory on this station.</p>
+  <div class="form-field">
+    <label for="identity-search">Find an identity</label>
+    <input id="identity-search" type="search" placeholder="Search names">
+  </div>
+  <p id="identity-status" role="status">Loading…</p>
+  <ul id="identity-list"></ul>
+</dialog>
+
+</body>
+</html>

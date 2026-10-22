@@ -51,3 +51,8 @@ Thumbs.db
 # Private hardware deployment records
 /hardware/*.local.*
 /hardware/local/
+
+# Graphify temporary caches and sidecars
+graphify-out/cache/
+graphify-out/.graphify_*
+graphify-out/input-*.json

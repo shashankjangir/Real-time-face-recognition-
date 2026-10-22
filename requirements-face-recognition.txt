@@ -1,3 +1,4 @@
 # Trained face detector/encoder required for real enrollment.
 # dlib may require CMake, a compiler, and platform development libraries.
+setuptools<70
 face-recognition>=1.3.0

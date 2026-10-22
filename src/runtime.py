@@ -24,7 +24,7 @@ class RecognitionRuntime:
         self.session_id = session_id or str(uuid.uuid4())
         self.queue = FrameQueue(config.FRAME_QUEUE_SIZE)
         self.coordinator = DecisionCoordinator(engine.db_manager, action,
-            enabled=not isinstance(camera.backend, SyntheticBackend))
+            enabled=not isinstance(camera.backend, SyntheticBackend), engine=engine)
         engine.decision_coordinator = self.coordinator
         self.workers = [RecognitionWorker(i+1, self.queue, engine, engine.db_manager,
                          self.session_id, runtime=self) for i in range(config.NUM_WORKER_THREADS)]

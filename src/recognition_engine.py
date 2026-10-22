@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Recognition Engine Module for Real-Time Facial Recognition & Access System
 Deep metric learning (128D embeddings), vectorized cosine-distance matching,
@@ -31,6 +32,38 @@ except ImportError:
     face_recognition = None
 
 
+def unrotate_box(box_coords: Tuple[int, int, int, int], angle: float, shape: Tuple[int, int]) -> FaceBox:
+    """Transform (top, right, bottom, left) from rotated frame back to original frame space."""
+    if angle == 0:
+        return FaceBox(*box_coords)
+    h, w = shape[:2]
+    cx, cy = w / 2.0, h / 2.0
+    rad = np.radians(-angle)
+    c, s = np.cos(rad), np.sin(rad)
+    top, right, bottom, left = box_coords
+    xs = np.array([left, right, right, left], dtype=np.float32)
+    ys = np.array([top, top, bottom, bottom], dtype=np.float32)
+    orig_x = c * (xs - cx) - s * (ys - cy) + cx
+    orig_y = s * (xs - cx) + c * (ys - cy) + cy
+    return FaceBox(
+        top=int(np.clip(orig_y.min(), 0, h)),
+        right=int(np.clip(orig_x.max(), 0, w)),
+        bottom=int(np.clip(orig_y.max(), 0, h)),
+        left=int(np.clip(orig_x.min(), 0, w))
+    )
+
+
+def calculate_ear(eye_points: List[Tuple[int, int]]) -> float:
+    """Compute Eye Aspect Ratio (EAR) from 6 landmark points."""
+    if len(eye_points) < 6:
+        return 0.0
+    p = np.array(eye_points, dtype=np.float32)
+    a = float(np.linalg.norm(p[1] - p[5]))
+    b = float(np.linalg.norm(p[2] - p[4]))
+    c = float(np.linalg.norm(p[0] - p[3]))
+    return (a + b) / (2.0 * c) if c > 1e-6 else 0.0
+
+
 @dataclass
 class FaceBox:
     """Bounding box: (top, right, bottom, left) matching face_recognition convention."""
@@ -59,6 +92,8 @@ class RecognizedFace:
     decision: str = "deny"
     reason: str = "not_evaluated"
     action_outcome: str = "not_requested"
+    is_attentive: bool = True
+    ear: float = 0.0
 
 
 # ============================================================================
@@ -160,6 +195,8 @@ class AnnotationOverlay:
                             'cooldown_suppressed': 'action cooldown'}.get(face.action_outcome, face.action_outcome)
             if face.reason == 'multiple_faces':
                 action_label = "multiple faces"
+            elif face.reason == 'attention_required':
+                action_label = "attention required"
             label = (f"{face.name}: RECOGNISED" if known else "Unknown") if display_only else f"{face.name}: {face.decision.upper()} / {action_label}"
             font = cv2.FONT_HERSHEY_SIMPLEX
             scale = config.TEXT_FONT_SCALE
@@ -171,7 +208,9 @@ class AnnotationOverlay:
             cv2.putText(vis, label, (b.left + 6, label_top + th + 4), font, scale, (255, 255, 255), thickness, cv2.LINE_AA)
 
         # Draw Telemetry HUD
-        hud_text = f"FPS: {self.fps:.1f}  |  Edge Inference: {self.latency_ms:.1f}ms"
+        with self.lock:
+            fps_val, lat_val = self.fps, self.latency_ms
+        hud_text = f"FPS: {fps_val:.1f}  |  Edge Inference: {lat_val:.1f}ms"
         cv2.putText(vis, hud_text, (18, vis.shape[0] - 18), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1, cv2.LINE_AA)
         return vis
 
@@ -187,10 +226,12 @@ class RecognitionEngine:
     - Vectorized cosine-distance matrix matching
     - Accuracy and latency require real evaluation
     """
+    last_tilt_angle: int = 0
 
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or get_db_manager()
         self.overlay = AnnotationOverlay()
+        self.last_tilt_angle: int = 0
         self.threshold = config.RECOGNITION_THRESHOLD
         self.decision_coordinator = None
 
@@ -235,19 +276,94 @@ class RecognitionEngine:
         if not HAS_FACE_RECOGNITION:
             raise RuntimeError("Recognition requires the face_recognition model; install requirements-face-recognition.txt.")
 
+    def check_attention(self, rgb: np.ndarray, box: FaceBox) -> Tuple[bool, float]:
+        """Apple-style attention check using Eye Aspect Ratio (EAR)."""
+        if not HAS_FACE_RECOGNITION or not hasattr(face_recognition, 'face_landmarks'):
+            return True, 0.0
+        try:
+            loc = [(box.top, box.right, box.bottom, box.left)]
+            landmarks_list = face_recognition.face_landmarks(rgb, loc)
+            if not landmarks_list:
+                return True, 0.0
+            lms = landmarks_list[0]
+            left_ear = calculate_ear(lms.get('left_eye', []))
+            right_ear = calculate_ear(lms.get('right_eye', []))
+            if left_ear > 0 and right_ear > 0:
+                ear = (left_ear + right_ear) / 2.0
+                return ear >= 0.18, ear
+        except Exception:
+            pass
+        return True, 0.0
+
+    def adapt_memory_template(self, identity_id: int, new_encoding: np.ndarray, alpha: float = 0.95):
+        """Update in-memory matching matrix after database template adaptation."""
+        with self.lock:
+            if identity_id in self.known_ids:
+                idx = self.known_ids.index(identity_id)
+                old_vec = self.known_matrix[idx].astype(np.float64)
+                updated = normalize_vector(alpha * old_vec + (1.0 - alpha) * new_encoding.astype(np.float64))
+                self.known_matrix[idx] = updated.astype(np.float32)
+
     def detect_and_extract(self, frame_bgr, strict=False):
         self.ensure_model_available()
         try:
             rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-            locs = face_recognition.face_locations(rgb, model=config.FACE_DETECTION_MODEL)
         except Exception as exc:
             raise RuntimeError("Face detection failed") from exc
+
+        h, w = rgb.shape[:2]
+        center = (w / 2.0, h / 2.0)
+
+        # 1. Primary check: try last detected tilt angle (default 0 deg)
+        active_angle = getattr(self, 'last_tilt_angle', 0)
+        active_rgb = rgb
+        if active_angle != 0:
+            M = cv2.getRotationMatrix2D(center, active_angle, 1.0)
+            active_rgb = cv2.warpAffine(rgb, M, (w, h))
+
+        try:
+            locs = face_recognition.face_locations(active_rgb, model=config.FACE_DETECTION_MODEL)
+        except Exception as exc:
+            raise RuntimeError("Face detection failed") from exc
+
+        # 2. If face moved away from previous angle, try upright (0 deg)
+        if not locs and active_angle != 0:
+            active_angle = 0
+            active_rgb = rgb
+            locs = face_recognition.face_locations(rgb, model=config.FACE_DETECTION_MODEL)
+
+        # 3. Multi-tilt scan: if still not found, search rotational pyramid
+        if not locs:
+            # Candidate angles covering 360-degree head roll with +-15 deg HOG tolerance
+            angles = (-30, 30, -60, 60, -90, 90, 180, -120, 120)
+            small_rgb = rgb[::2, ::2]  # Zero-copy 2x downsample for fast angle scan (<35ms)
+            small_h, small_w = small_rgb.shape[:2]
+            small_center = (small_w / 2.0, small_h / 2.0)
+
+            for cand in angles:
+                try:
+                    M_small = cv2.getRotationMatrix2D(small_center, cand, 1.0)
+                    rot_small = cv2.warpAffine(small_rgb, M_small, (small_w, small_h))
+                    cand_locs = face_recognition.face_locations(rot_small, model=config.FACE_DETECTION_MODEL)
+                    if cand_locs:
+                        active_angle = cand
+                        M_full = cv2.getRotationMatrix2D(center, cand, 1.0)
+                        active_rgb = cv2.warpAffine(rgb, M_full, (w, h))
+                        locs = face_recognition.face_locations(active_rgb, model=config.FACE_DETECTION_MODEL)
+                        break
+                except Exception:
+                    pass
+
         if strict and len(locs) != 1:
             raise ValueError("Exactly one face is required for enrollment; found %d." % len(locs))
         if not locs:
+            self.last_tilt_angle = 0
             return []
+
+        self.last_tilt_angle = active_angle
+
         try:
-            encs = face_recognition.face_encodings(rgb, locs, num_jitters=1)
+            encs = face_recognition.face_encodings(active_rgb, locs, num_jitters=1)
             if len(encs) != len(locs):
                 raise RuntimeError("Missing face embeddings")
             faces = []
@@ -255,7 +371,8 @@ class RecognitionEngine:
                 enc = np.asarray(enc, dtype=np.float32)
                 if enc.shape != (128,) or not np.isfinite(enc).all() or np.linalg.norm(enc) <= 0:
                     raise RuntimeError("Invalid face embedding")
-                faces.append((FaceBox(*location), normalize_vector(enc)))
+                orig_box = unrotate_box(location, active_angle, (h, w))
+                faces.append((orig_box, normalize_vector(enc)))
             return faces
         except Exception as exc:
             raise RuntimeError("Face extraction failed") from exc
@@ -301,9 +418,20 @@ class RecognitionEngine:
         detections = self.detect_and_extract(frame_bgr)
         results: List[RecognizedFace] = []
 
+        rgb = None
         for box, embedding in detections:
             is_match, name, conf, dist, ident_id = self.match_embedding(embedding)
             t_infer = (time.monotonic() - t_start) * 1000.0
+
+            is_attentive, ear_val = True, 0.0
+            if is_match:
+                if rgb is None:
+                    try:
+                        rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+                    except Exception:
+                        pass
+                if rgb is not None:
+                    is_attentive, ear_val = self.check_attention(rgb, box)
 
             results.append(RecognizedFace(
                 box=box,
@@ -313,7 +441,9 @@ class RecognitionEngine:
                 match_distance=dist,
                 is_match=is_match,
                 identity_id=ident_id,
-                inference_time_ms=t_infer
+                inference_time_ms=t_infer,
+                is_attentive=is_attentive,
+                ear=ear_val
             ))
 
         total_latency = (time.monotonic() - t_start) * 1000.0
@@ -403,12 +533,12 @@ class RecognitionWorker(threading.Thread):
                     self.running = False
                     continue
                 self.engine.overlay.update([])
-                logger.exception("Worker %s failed", self.worker_id)
+                logger.exception("Worker %s failed on frame %s", self.worker_id, frame_id)
                 try:
                     self.coordinator.fault(frame_id, self.session_id, str(e))
                 except Exception:
                     logger.exception("Could not persist pipeline failure")
-                self.running = False
+                # Continue on transient errors instead of dying permanently
 
     def stop(self):
         self.running = False

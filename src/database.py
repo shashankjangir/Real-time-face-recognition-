@@ -6,12 +6,14 @@ Structured SQLite database with B-tree indexing, WAL concurrency, and transactio
 import sqlite3
 import threading
 import logging
+import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple, Optional, Any
 from contextlib import contextmanager
 from queue import Queue
 import os
 import uuid
+import numpy as np
 
 try:
     from . import config
@@ -163,7 +165,10 @@ class DatabasePool:
 
     @contextmanager
     def get_connection(self):
-        conn = self.available.get(timeout=config.DB_POOL_TIMEOUT)
+        try:
+            conn = self.available.get(timeout=config.DB_POOL_TIMEOUT)
+        except Exception:
+            raise RuntimeError(f"Database connection pool exhausted (size={self.pool_size}, timeout={config.DB_POOL_TIMEOUT}s)")
         try:
             yield conn
         finally:
@@ -192,6 +197,8 @@ class DatabaseManager:
             
         self.pool = DatabasePool(self.db_file, pool_size=config.DB_POOL_SIZE)
         self._initialize_schema()
+        self._adaptation_lock = threading.Lock()
+        self._last_adaptation: Dict[int, float] = {}
 
     def _initialize_schema(self):
         """Execute DDL statements and create indexes."""
@@ -310,6 +317,34 @@ class DatabaseManager:
         with self.pool.get_connection() as conn:
             conn.execute("UPDATE access_log SET action_outcome=?, action_detail=? WHERE id=?",
                          (outcome, detail, log_id))
+            conn.commit()
+
+    def adapt_identity_template(self, identity_id: int, new_encoding, alpha: float = 0.95, min_interval: float = 10.0) -> bool:
+        """Gradually blend confident new captures into the enrolled template (Apple momentum update).
+        Rate-limited per identity (default 10s min_interval) to protect SQLite from lock contention
+        and flash storage wear during continuous 30 FPS video streaming.
+        """
+        now = time.monotonic()
+        with self._adaptation_lock:
+            if min_interval > 0:
+                last = self._last_adaptation.get(identity_id, 0.0)
+                if now - last < min_interval:
+                    return False
+                self._last_adaptation[identity_id] = now
+
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT encoding FROM identities WHERE id = ?", (identity_id,))
+            row = cursor.fetchone()
+            if not row:
+                return False
+            old_vec = np.frombuffer(row['encoding'], dtype=np.float64)
+            stacked = alpha * old_vec + (1.0 - alpha) * np.asarray(new_encoding, dtype=np.float64)
+            norm = np.linalg.norm(stacked)
+            updated = stacked / norm if norm > 1e-10 else stacked
+            cursor.execute("UPDATE identities SET encoding = ? WHERE id = ?", (updated.tobytes(), identity_id))
+            conn.commit()
+            return True
 
     def get_recent_logs(self, limit: int = 50, name: str = None, hours: int = 24) -> List[Dict]:
         """Fetch latest authentication records using indexed timestamp lookup."""
@@ -456,3 +491,11 @@ def get_db_manager(db_file: str = None) -> DatabaseManager:
         if _db_manager_instance is None or (db_file and _db_manager_instance.db_file != db_file):
             _db_manager_instance = DatabaseManager(db_file=db_file)
         return _db_manager_instance
+
+def reset_db_manager():
+    """Reset the global singleton. Use in tests for isolation."""
+    global _db_manager_instance
+    with _db_lock:
+        if _db_manager_instance is not None:
+            _db_manager_instance.close()
+            _db_manager_instance = None

@@ -5,7 +5,7 @@ Extracts 128D metric embeddings with image quality validation and SQLite persist
 
 import os
 import time
-import pickle
+
 import argparse
 import logging
 from typing import Optional, Tuple, List
@@ -64,6 +64,15 @@ def face_quality_report(frame_bgr, box):
                 face_width=r-l, face_height=b-t, guidance=guidance)
 
 
+def create_robust_template(embeddings: List[np.ndarray]) -> np.ndarray:
+    """Compute normalized centroid template from multiple captures (Apple-style enrollment)."""
+    if not embeddings:
+        raise ValueError("At least one embedding is required.")
+    stacked = np.array([normalize_vector(np.asarray(e, dtype=np.float64)) for e in embeddings], dtype=np.float64)
+    centroid = np.mean(stacked, axis=0)
+    return normalize_vector(centroid)
+
+
 def assess_face_quality(frame_bgr, box):
     return face_quality_report(frame_bgr, box)['score']
 
@@ -74,8 +83,10 @@ def enroll_identity(name: str, encoding: np.ndarray, quality_score: float = 1.0,
     Persist enrolled identity into SQLite database and sync to encodings cache.
     """
     db = db_manager or get_db_manager()
-    # Normalize to 128D unit vector
-    vec128 = normalize_vector(encoding.astype(np.float64))
+    if isinstance(encoding, (list, tuple)) or (isinstance(encoding, np.ndarray) and encoding.ndim > 1):
+        vec128 = create_robust_template(list(encoding))
+    else:
+        vec128 = normalize_vector(np.asarray(encoding, dtype=np.float64))
     raw_bytes = vec128.tobytes()
 
     ident_id = db.add_identity(
@@ -86,8 +97,6 @@ def enroll_identity(name: str, encoding: np.ndarray, quality_score: float = 1.0,
         notes="Enrolled via automated access pipeline"
     )
 
-    # Sync to legacy encodings.pkl for full backward compatibility
-    sync_to_pickle(db)
     logger.info(f"Enrolled identity: {name} (ID: {ident_id}, Quality: {quality_score:.2f})")
     return ident_id
 
@@ -111,28 +120,7 @@ def validate_enrollment_frame(frame_bgr, engine):
     return embedding, quality
 
 
-def sync_to_pickle(db_manager: DatabaseManager = None):
-    """Sync all SQLite identities to encodings.pkl for legacy tool compatibility."""
-    db = db_manager or get_db_manager()
-    rows = db.get_all_identities()
-    encodings = []
-    names = []
 
-    for r in rows:
-        try:
-            vec = np.frombuffer(r['encoding'], dtype=np.float64)
-            if len(vec) == 128:
-                encodings.append(vec)
-                names.append(r['name'])
-        except Exception:
-            pass
-
-    data = {"encodings": encodings, "names": names}
-    try:
-        with open(config.ENCODINGS_FILE, "wb") as f:
-            pickle.dump(data, f)
-    except Exception as e:
-        logger.warning(f"Failed to sync encodings.pkl: {e}")
 
 
 def enroll_from_image_file(image_path: str, name: str, db_manager: DatabaseManager = None) -> bool:
@@ -162,6 +150,33 @@ def enroll_from_image_file(image_path: str, name: str, db_manager: DatabaseManag
     print(f"Successfully enrolled '{name}' (Quality Score: {q_score:.2f})")
     return True
 
+
+
+
+def enroll_from_multiple_images(image_paths: List[str], name: str, db_manager: DatabaseManager = None) -> bool:
+    """Enroll an identity from multiple angle image files (Apple multi-pose capture)."""
+    embeddings = []
+    qualities = []
+    engine = RecognitionEngine(db_manager=db_manager)
+    for p in image_paths:
+        if not os.path.exists(p):
+            continue
+        frame = cv2.imread(p)
+        if frame is None:
+            continue
+        try:
+            emb, q = validate_enrollment_frame(frame, engine)
+            embeddings.append(emb)
+            qualities.append(q)
+        except Exception:
+            continue
+    if not embeddings:
+        print(f"Failed to extract valid faces from provided images for '{name}'.")
+        return False
+    avg_quality = float(np.mean(qualities))
+    enroll_identity(name=name, encoding=embeddings, quality_score=avg_quality, photo_path=image_paths[0], db_manager=db_manager)
+    print(f"Successfully enrolled '{name}' with {len(embeddings)} angular samples (Avg Quality: {avg_quality:.2f})")
+    return True
 
 def enroll_synthetic_identities(count: int = 50, db_manager: DatabaseManager = None) -> List[str]:
     """
