@@ -39,26 +39,29 @@ class Picamera2Backend(CameraBackend):
             from picamera2 import Picamera2
             self.picam2 = Picamera2()
             cam_config = self.picam2.create_video_configuration(
-                main={"format": "BGR888", "size": (self.width, self.height)},
+                main={"format": "RGB888", "size": (self.width, self.height)},
                 controls={"FrameRate": self.fps},
                 buffer_count=6
             )
             self.picam2.configure(cam_config)
             # Camera Module 3 supports AF; older fixed-focus modules do not.
             self.autofocus_enabled = 'AfMode' in self.picam2.camera_controls
-            if self.autofocus_enabled:
-                from libcamera import controls
-                # Use Auto with initial trigger instead of Continuous to prevent glibc heap corruption on Debian Trixie / libcamera 0.7
-                ctrls = {'AfMode': controls.AfModeEnum.Auto}
-                if hasattr(controls, 'AfTriggerEnum'):
-                    ctrls['AfTrigger'] = controls.AfTriggerEnum.Start
-                self.picam2.set_controls(ctrls)
             # Explicitly request automatic exposure and white balance when supported.
             automatic = {key: True for key in ('AeEnable', 'AwbEnable')
                          if key in self.picam2.camera_controls}
             if automatic:
                 self.picam2.set_controls(automatic)
             self.picam2.start()
+            if self.autofocus_enabled:
+                from libcamera import controls
+                # Trigger autofocus sweep once camera stream is active so PDAF lens motor focuses
+                af_ctrls = {'AfMode': controls.AfModeEnum.Auto}
+                if hasattr(controls, 'AfTriggerEnum'):
+                    af_ctrls['AfTrigger'] = controls.AfTriggerEnum.Start
+                try:
+                    self.picam2.set_controls(af_ctrls)
+                except Exception as e:
+                    logger.debug("AfTrigger initial sweep notice: %s", e)
             logger.info("Picamera2 (IMX708) started successfully.")
         except Exception as e:
             logger.error(f"Failed to start Picamera2 backend: {e}")
