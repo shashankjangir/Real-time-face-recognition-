@@ -1,0 +1,37 @@
+{
+  "mode": "implement",
+  "objective": "Fix nine audited issues across root and both generations",
+  "acceptance_criteria": [
+    "No default or overwritten administrator credentials",
+    "Attention failures and closed eyes deny",
+    "SCRFD NMS preserves separate faces",
+    "Inverse tilt coordinates correct",
+    "Memory and stored templates remain synchronized",
+    "Read routes require authentication before pipeline access",
+    "Healthy empty SCRFD avoids dlib fallback",
+    "Pi setup retains system OpenCV",
+    "All three Python and speech suites pass and CI covers generations"
+  ],
+  "allowed_write_scope": [
+    "src/",
+    "tests/",
+    "gen-1-dlib/",
+    "gen-2-scrfd/",
+    "setup_rpi.sh",
+    "README.md",
+    "docs/",
+    ".env.example",
+    ".github/workflows/",
+    ".gravitas/sessions/audit-nine-fixes/",
+    "requirements-pi.txt",
+    "guide_raspberry.md"
+  ],
+  "non_goals": [
+    "No biometric data migration",
+    "No hardware performance claims",
+    "No unrelated camera changes"
+  ],
+  "risk": "high",
+  "budget": "balanced",
+  "verification": "suite"
+}

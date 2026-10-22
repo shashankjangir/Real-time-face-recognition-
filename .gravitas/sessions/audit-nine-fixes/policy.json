@@ -1,0 +1,11 @@
+{
+  "planning": "deep",
+  "context_depth": "dependency",
+  "verification_depth": "full",
+  "delegation": "none",
+  "reason_codes": [
+    "security",
+    "multiple-implementations",
+    "existing-local-changes"
+  ]
+}

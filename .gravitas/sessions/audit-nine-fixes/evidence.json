@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "credentials": "Removed token assignments from all six launchers; verified no admin123 remains in active launch scripts.",
+    "attention": "test_attention_rejects_closed_missing_and_failed_landmarks: failed before fix, passes after fix in all suites.",
+    "suppression": "test_separate_faces_survive_suppression: failed before fix, passes with real OpenCV NMS.",
+    "rotation": "test_unrotate_matches_opencv_inverse: failed before fix, passes for five angles.",
+    "adaptation": "test_throttled_adaptation_keeps_memory_equal_to_database: failed before fix, passes after fix.",
+    "read_authentication": "All protected GET/HEAD routes reject missing credentials before initialization; real loopback HTTP challenge/retry serves dashboard, video and API with valid credentials. Inverted auth predicate fails regression test; original restored.",
+    "empty_detector": "test_healthy_empty_result_does_not_use_dlib: failed before fix, passes; unavailable-detector fallback also passes.",
+    "pi_dependencies": "setup_rpi.sh uses requirements-pi.txt, which excludes pip OpenCV; bash syntax checked. No Pi installation performed.",
+    "suite_and_ci": "Gravitas verify.py: root 87, Gen-1 87, Gen-2 92 tests pass; all speech and compileall checks pass. CI matrix includes all three projects."
+  },
+  "limitations": [
+    "No Raspberry Pi, physical camera, relay, browser GUI, or real face-model accuracy validation",
+    "Hosted CI has not run",
+    "Graphify was queried as a map; existing generated graph files were not rebuilt in this turn"
+  ],
+  "verification_logs": [
+    "root-verification.log",
+    "gen1-verification.log",
+    "gen2-verification.log"
+  ]
+}
