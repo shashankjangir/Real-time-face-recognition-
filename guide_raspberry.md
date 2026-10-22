@@ -144,12 +144,18 @@ pip install face-recognition face-recognition-models
 ### Step 6.4: Install Gen-2 Requirements
 ```bash
 cd ~/face-access/gen-2-scrfd
-pip install -r requirements.txt
+pip install -r ../requirements-pi.txt
 ```
 
 ---
 
 ## 7. Running the System on Raspberry Pi
+
+Generate a token once with `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`.
+Export it as `ADMIN_ENROLLMENT_TOKEN` before running either launcher. Replace every
+`<your-generated-token>` placeholder below with that value. The browser login uses
+username `admin` and this token as the password; use HTTPS for network access.
+
 
 ### Option 1: Run Generation 2 (SCRFD - Recommended for Edge)
 Provides 60+ FPS face detection, native 5-point landmark keypoints, and tolerance to face roll/tilt:
@@ -164,7 +170,7 @@ Or manually:
 ```bash
 source ~/face-access-env/bin/activate
 cd ~/face-access/gen-2-scrfd
-export ADMIN_ENROLLMENT_TOKEN="admin123"
+export ADMIN_ENROLLMENT_TOKEN="<your-generated-token>"
 export CAMERA_BACKEND="auto"
 python3 app.py
 ```
@@ -200,7 +206,7 @@ Once started, the server outputs:
    - Live annotated video feed
    - Access event logs (granted/denied)
    - Real-time FPS, worker queue latency, and database status
-   - Admin face enrollment modal (use token `admin123`)
+   - Admin face enrollment modal (use token `<your-generated-token>`)
 
 ---
 
@@ -208,7 +214,7 @@ Once started, the server outputs:
 
 ### Method A: Via Web UI
 1. Click **Enroll Face** on the web dashboard.
-2. Enter the Admin Token (`admin123`).
+2. Enter the Admin Token (`<your-generated-token>`).
 3. Provide the user's name, role, and department.
 4. Capture 3-5 images directly from the live camera stream or upload photo files.
 5. Click **Save Enrollment**. Vector embeddings are instantly indexed in SQLite WAL.
@@ -241,7 +247,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/face-access/gen-2-scrfd
-Environment="ADMIN_ENROLLMENT_TOKEN=admin123"
+Environment="ADMIN_ENROLLMENT_TOKEN=<your-generated-token>"
 Environment="CAMERA_BACKEND=auto"
 Environment="PYTHONIOENCODING=utf-8"
 ExecStart=/home/pi/face-access-env/bin/python3 app.py

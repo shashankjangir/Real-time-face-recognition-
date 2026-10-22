@@ -15,6 +15,7 @@ web = importlib.import_module('src.app')
 class DashboardTests(unittest.TestCase):
     def setUp(self):
         self.client = web.app.test_client()
+        self.client.environ_base["HTTP_AUTHORIZATION"] = "Bearer test-token"
         self.frame = np.full((120,120,3), 128, dtype=np.uint8)
         self.box = FaceBox(0,120,120,0)
         self.camera = Mock(backend=object())

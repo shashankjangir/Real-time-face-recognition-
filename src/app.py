@@ -50,6 +50,32 @@ pipeline_initialized = False
 pipeline_lock = threading.Lock()
 runtime = None
 
+@app.before_request
+def protect_dashboard():
+    """Browser credentials cover video, downloads and same-origin API reads."""
+    if request.method not in ('GET', 'HEAD') or request.endpoint == 'static':
+        return
+    configured = config.ADMIN_ENROLLMENT_TOKEN
+    if not configured:
+        return jsonify(status='error', message='Administrator access is not configured.'), 503
+    auth = request.authorization
+    token = None
+    if auth and auth.type == 'basic' and auth.username == 'admin':
+        token = auth.password
+    elif auth and auth.type == 'bearer':
+        token = auth.token
+    if not token or not hmac.compare_digest(token.encode('utf-8'), configured.encode('utf-8')):
+        return jsonify(status='error', message='Administrator authentication required.'), 401, {
+            'WWW-Authenticate': 'Basic realm="Face access", charset="UTF-8"'}
+
+
+@app.after_request
+def private_response(response):
+    if request.endpoint != 'static':
+        response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 @app.errorhandler(RuntimeError)
 def unavailable(exc):
     return jsonify({'status': 'unhealthy', 'message': str(exc)}), 503

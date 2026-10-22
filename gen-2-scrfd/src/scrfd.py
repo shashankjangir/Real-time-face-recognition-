@@ -157,8 +157,10 @@ class SCRFDDetector:
             all_kps[:, :, 1] *= scale_y
 
         # Non-Maximum Suppression (NMS)
+        rectangles = all_bboxes.copy()
+        rectangles[:, 2:] -= rectangles[:, :2]
         indices = cv2.dnn.NMSBoxes(
-            all_bboxes.tolist(),
+            rectangles.tolist(),
             all_scores.tolist(),
             self.conf_threshold,
             self.nms_threshold

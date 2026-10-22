@@ -81,7 +81,9 @@ class PipelineSafetyTests(unittest.TestCase):
         with patch('src.camera.Picamera2Backend.start', side_effect=RuntimeError('missing')), patch('src.camera.OpenCVBackend.start', side_effect=RuntimeError('missing')), patch('src.camera.SyntheticBackend.start') as synthetic:
             for backend in ('auto', 'picamera2', 'opencv'):
                 with self.assertRaises(RuntimeError):
-                    CameraManager(backend)
+                    manager = CameraManager(backend)
+                    self.addCleanup(manager.stop)
+                    manager.start()
             synthetic.assert_not_called()
 
     def test_runtime_camera_failure_clears_frame(self):
@@ -145,8 +147,10 @@ class PipelineSafetyTests(unittest.TestCase):
 
     def test_health_reports_model_failure(self):
         from src import app as web
+        from src import config
+        self.enterContext(patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', 'test-token'))
         with patch.object(web, 'pipeline_initialized', False), patch.object(RecognitionEngine, 'ensure_model_available', side_effect=RuntimeError('model missing')):
-            response = web.app.test_client().get('/health')
+            response = web.app.test_client().get('/health', headers={'Authorization': 'Bearer test-token'})
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.get_json()['status'], 'unhealthy')
 

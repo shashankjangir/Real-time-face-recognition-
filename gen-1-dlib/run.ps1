@@ -1,5 +1,4 @@
 # Run Real-Time Face Recognition (Generation 1 - dlib)
-$env:ADMIN_ENROLLMENT_TOKEN="admin123"
 $env:CAMERA_BACKEND="opencv"
 $env:CAMERA_INDEX="0"
 $env:PYTHONIOENCODING="utf-8"

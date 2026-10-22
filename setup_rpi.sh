@@ -22,6 +22,7 @@ sudo apt install -y \
     python3-libcamera \
     libcamera-apps \
     python3-opencv \
+    python3-numpy \
     build-essential \
     cmake \
     libopenblas-dev \
@@ -60,11 +61,7 @@ pip install face-recognition face-recognition-models
 
 # Install project requirements
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/gen-2-scrfd/requirements.txt" ]; then
-    pip install -r "$SCRIPT_DIR/gen-2-scrfd/requirements.txt"
-elif [ -f "$SCRIPT_DIR/requirements.txt" ]; then
-    pip install -r "$SCRIPT_DIR/requirements.txt"
-fi
+pip install -r "$SCRIPT_DIR/requirements-pi.txt"
 
 # 6. Verify environment and cameras
 echo "[5/6] Verifying package imports..."

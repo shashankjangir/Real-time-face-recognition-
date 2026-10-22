@@ -1,0 +1,4 @@
+# Camera bindings, OpenCV and NumPy come from Raspberry Pi OS packages.
+# Use a virtual environment created with --system-site-packages.
+flask>=3.0.0
+onnxruntime>=1.15.0

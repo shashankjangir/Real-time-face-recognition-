@@ -2,18 +2,17 @@
 Unit tests for SCRFD ONNX Detector integration in Generation 2.
 """
 import unittest
-import sys
 from unittest.mock import Mock, patch
 import numpy as np
-
-if 'cv2' not in sys.modules:
-    sys.modules['cv2'] = Mock()
 
 from src.scrfd import SCRFDDetector
 from src.recognition_engine import RecognitionEngine, FaceBox
 
 
 class TestSCRFD(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch.object(SCRFDDetector, "_initialize_session"))
+
     def test_anchor_generation(self):
         detector = SCRFDDetector(model_path="nonexistent.onnx")
         detector.input_size = (640, 640)

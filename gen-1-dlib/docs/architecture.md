@@ -72,6 +72,8 @@ than the shell's current directory.
 | `/api/enroll` | POST | Administrator-authenticated live capture enrollment. |
 | `/health` | GET | Basic service status. |
 
-Only web enrollment currently requires administrator credentials. Read endpoints
-and video are not authenticated. See [enrollment](enrollment.md) for request
-format and [benchmarking](benchmarking.md) for telemetry limitations.
+Dashboard, video, read APIs, and health checks require HTTP Basic credentials
+(username `admin`, password `ADMIN_ENROLLMENT_TOKEN`) or a bearer token. Enrollment
+and quality-check POST requests require an explicit bearer token. Unconfigured
+credentials disable access. See [authentication](enrollment.md) for HTTPS deployment
+and request formats, and [benchmarking](benchmarking.md) for telemetry limitations.

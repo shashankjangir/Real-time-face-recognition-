@@ -93,7 +93,11 @@ class EnrollmentTests(unittest.TestCase):
         self.save.assert_not_called()
 
     def test_strict_detector_never_uses_fallback(self):
-        engine = RecognitionEngine.__new__(RecognitionEngine)
+        db = Mock()
+        db.get_all_identities.return_value = []
+        self.enterContext(patch.object(recognition, 'SCRFDDetector'))
+        engine = RecognitionEngine(db)
+        engine.detector.session = None
         engine.opencv_extractor = Mock()
         with patch.object(recognition, 'HAS_FACE_RECOGNITION', False):
             with self.assertRaises(RuntimeError):

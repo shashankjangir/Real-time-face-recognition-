@@ -70,6 +70,8 @@ python -m pip install -r requirements-face-recognition.txt
 For Raspberry Pi, follow [the hardware installation guide](docs/raspberry-pi-setup.md)
 instead so the environment can use the system camera bindings.
 
+Configure a strong `ADMIN_ENROLLMENT_TOKEN` as described under Enrollment before starting.
+
 ```bash
 python app.py
 ```
@@ -82,8 +84,8 @@ See [decision and failure behavior](docs/decision-safety.md).
 
 ### Enrollment
 
-Configure `ADMIN_ENROLLMENT_TOKEN` before starting the server, then enter it in
-the dashboard's administrator token field. Web enrollment is disabled when the
+Configure `ADMIN_ENROLLMENT_TOKEN` before starting the server, then sign in to the browser prompt as `admin` with that token as the password.
+Use the same token in the dashboard's administrator token field for enrollment. Dashboard/API access and web enrollment are disabled when the
 variable is unset. See [enrollment and authentication](docs/enrollment.md) for
 setup, API requests, quality checks, and local CLI usage.
 
@@ -170,12 +172,12 @@ Run speech logic checks with `node tests/test_speech.js` in addition to the Pyth
   - Restyled web dashboard (`src/templates/dashboard.html`, `src/static/dashboard.css`) according to Apple's design reference: Frost canvas (`#f5f5f7`), hairline dividers (`#d2d2d7`), Apple Blue (`#0071e3`) interactive switches, SF Pro type scale, flat elevation, and rounded pill controls (`980px` radius).
 - **Eye Aspect Ratio (EAR) Liveness & Attention Verification**:
   - Added `calculate_ear()` and `check_attention()` in `src/recognition_engine.py` using 6-point eye landmarks.
-  - Enforced in `src/access.py`: denies inattentive or closed-eye attempts (photo-spoof mitigation) with decision reason `attention_required`.
+  - Enforced in `src/access.py`: denies inattentive or closed-eye attempts (eye-openness check only, not liveness protection) with decision reason `attention_required`.
 - **Multi-Sample Angular Centroid Enrollment**:
   - Added `create_robust_template()` in `src/enroll.py` and `--images` CLI argument in `enroll.py`.
   - Supports multi-pose angular captures (e.g. left, center, right) to generate a normalized 128D centroid embedding for enrollment.
 - **Continuous Biometric Template Adaptation**:
-  - Added `adapt_identity_template()` in `src/database.py` and `adapt_memory_template()` in `src/recognition_engine.py`.
+  - Added `adapt_identity_template()` in `src/database.py`; after a successful persisted update, recognition reloads the stored templates.
   - Automatically updates stored identity embeddings via Exponential Moving Average ($0.95 \cdot v_{\text{old}} + 0.05 \cdot v_{\text{new}}$) whenever a verified match has high confidence (cosine distance $\le 0.04$).
 - **360° Tilt-Invariant Face Recognition**:
   - Implemented multi-angle rotational pyramid search `(-30°, 30°, -60°, 60°, -90°, 90°, 180°, -120°, 120°)` with fast zero-copy $2\times$ downsampling (`rgb[::2, ::2]`).
@@ -208,7 +210,7 @@ Run speech logic checks with `node tests/test_speech.js` in addition to the Pyth
 - **Automated Linux Setup Script**:
   - Created [`setup_rpi.sh`](setup_rpi.sh) for 1-command installation of system dependencies, Picamera2/libcamera, Python wheels (`setuptools<70`), and ONNX Runtime models on Raspberry Pi.
 - **Dedicated Raspberry Pi Execution Scripts**:
-  - Added executable Bash scripts [`gen-2-scrfd/run.sh`](gen-2-scrfd/run.sh) and [`gen-1-dlib/run.sh`](gen-1-dlib/run.sh) pre-configured with `CAMERA_BACKEND=auto`, `ADMIN_ENROLLMENT_TOKEN=admin123`, and UTF-8 encoding.
+  - Added executable Bash scripts [`gen-2-scrfd/run.sh`](gen-2-scrfd/run.sh) and [`gen-1-dlib/run.sh`](gen-1-dlib/run.sh) pre-configured with `CAMERA_BACKEND=auto`, a user-provided `ADMIN_ENROLLMENT_TOKEN`, and UTF-8 encoding.
 - **Windows Runner & Terminal Compatibility**:
   - Added Windows runners (`run.ps1` and `run.bat`) for both generations, resolved `cp1252` terminal encoding, and fixed `setuptools>=70` `pkg_resources` compatibility issue.
 

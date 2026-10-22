@@ -12,7 +12,6 @@ elif [ -d "$HOME/face-access-env" ]; then
     source "$HOME/face-access-env/bin/activate"
 fi
 
-export ADMIN_ENROLLMENT_TOKEN="${ADMIN_ENROLLMENT_TOKEN:-admin123}"
 export CAMERA_BACKEND="${CAMERA_BACKEND:-auto}"
 export CAMERA_INDEX="${CAMERA_INDEX:-0}"
 export PYTHONIOENCODING="utf-8"

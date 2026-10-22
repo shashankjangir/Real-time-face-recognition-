@@ -44,7 +44,7 @@ def unrotate_box(box_coords: Tuple[int, int, int, int], angle: float, shape: Tup
         return FaceBox(*box_coords)
     h, w = shape[:2]
     cx, cy = w / 2.0, h / 2.0
-    rad = np.radians(-angle)
+    rad = np.radians(angle)  # Inverse of OpenCV's image-coordinate rotation.
     c, s = np.cos(rad), np.sin(rad)
     top, right, bottom, left = box_coords
     xs = np.array([left, right, right, left], dtype=np.float32)
@@ -285,12 +285,12 @@ class RecognitionEngine:
     def check_attention(self, rgb: np.ndarray, box: FaceBox) -> Tuple[bool, float]:
         """Apple-style attention check using Eye Aspect Ratio (EAR)."""
         if not HAS_FACE_RECOGNITION or not hasattr(face_recognition, 'face_landmarks'):
-            return True, 0.0
+            return False, 0.0
         try:
             loc = [(box.top, box.right, box.bottom, box.left)]
             landmarks_list = face_recognition.face_landmarks(rgb, loc)
             if not landmarks_list:
-                return True, 0.0
+                return False, 0.0
             lms = landmarks_list[0]
             left_ear = calculate_ear(lms.get('left_eye', []))
             right_ear = calculate_ear(lms.get('right_eye', []))
@@ -299,16 +299,7 @@ class RecognitionEngine:
                 return ear >= 0.18, ear
         except Exception:
             pass
-        return True, 0.0
-
-    def adapt_memory_template(self, identity_id: int, new_encoding: np.ndarray, alpha: float = 0.95):
-        """Update in-memory matching matrix after database template adaptation."""
-        with self.lock:
-            if identity_id in self.known_ids:
-                idx = self.known_ids.index(identity_id)
-                old_vec = self.known_matrix[idx].astype(np.float64)
-                updated = normalize_vector(alpha * old_vec + (1.0 - alpha) * new_encoding.astype(np.float64))
-                self.known_matrix[idx] = updated.astype(np.float32)
+        return False, 0.0
 
     def detect_and_extract(self, frame_bgr, strict=False):
         self.ensure_model_available()
@@ -323,10 +314,9 @@ class RecognitionEngine:
         active_rgb = rgb
 
         # Generation 2: High-speed SCRFD inference (<8ms, native tilt-invariance & 5 keypoints)
-        scrfd_results = self.detector.detect(frame_bgr)
         locs = []
-        if scrfd_results:
-            locs = [res[0] for res in scrfd_results]
+        if self.detector.session is not None:
+            locs = [res[0] for res in self.detector.detect(frame_bgr)]
         else:
             # Fallback to rotational dlib detector if ONNX weights uninitialized
             active_angle = self.last_tilt_angle
@@ -432,7 +422,7 @@ class RecognitionEngine:
             is_match, name, conf, dist, ident_id = self.match_embedding(embedding)
             t_infer = (time.monotonic() - t_start) * 1000.0
 
-            is_attentive, ear_val = True, 0.0
+            is_attentive, ear_val = False, 0.0
             if is_match:
                 if rgb is None:
                     try:

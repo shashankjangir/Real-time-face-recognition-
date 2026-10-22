@@ -25,10 +25,21 @@ export ADMIN_ENROLLMENT_TOKEN='<your-generated-token>'
 python app.py
 ```
 
-An unset or empty token disables HTTP enrollment. `.env.example` documents the
+An unset or empty token disables the dashboard, read APIs, and HTTP enrollment. `.env.example` documents the
 variables; copying it to `.env` does not load them automatically.
 
 ## Dashboard and API
+
+The browser first requests HTTP credentials: username `admin`, password your
+`ADMIN_ENROLLMENT_TOKEN`. Video, history, exports, and health checks all require
+these credentials. API readers may instead send `Authorization: Bearer <token>`.
+Use HTTPS through your deployment proxy for network access; HTTP authentication
+alone does not encrypt credentials. Browsers may cache HTTP credentials for the
+session; use a private browser session on shared devices. No default token is
+supplied by the launch scripts.
+
+Enrollment and quality-check POST requests still require an explicit bearer token;
+browser HTTP credentials alone cannot authorize these writes.
 
 Enter the token in the dashboard password field, then select **Enroll Identity**.
 Keep exactly one face visible with even lighting and clear focus. The dashboard
@@ -163,3 +174,5 @@ validate the threshold. Measure false acceptance and false rejection separately,
 with glasses and lighting conditions recorded. If the two distance distributions
 overlap, require another credential for access rather than claiming face-only
 recognition can distinguish these people reliably.
+
+Attention checks reject closed eyes and unavailable landmarks. They measure eye openness only; they are not liveness or photo-spoof protection.

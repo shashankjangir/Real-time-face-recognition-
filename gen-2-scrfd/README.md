@@ -89,8 +89,14 @@ Open dashboard at `http://localhost:5000`.
 - Calibrated all hardware documentation to Raspberry Pi 5 (4GB RAM) with 64GB microSD storage.
 
 ### [2026-10-21 19:25 IST] — Raspberry Pi Terminal Deployment & Runner Setup
-- Added `run.sh` bash runner for native execution on Raspberry Pi 5 terminal (`CAMERA_BACKEND=auto`, `ADMIN_ENROLLMENT_TOKEN=admin123`).
+- Added `run.sh` bash runner for native execution on Raspberry Pi 5 terminal (`CAMERA_BACKEND=auto`, a user-provided `ADMIN_ENROLLMENT_TOKEN`).
 - Added `run.ps1` and `run.bat` runners for local Windows verification.
 - Downloaded pre-trained SCRFD keypoint model weights (`models/scrfd_2.5g_bnkps.onnx`) with Hugging Face fallback URL in `src/scrfd.py`.
 - Formatted output logs to UTF-8 without non-printable Unicode characters to ensure seamless console rendering across both Linux and Windows.
 - Linked root terminal deployment guide [`guide_raspberry.md`](../guide_raspberry.md).
+
+### Dashboard authentication
+
+Set `ADMIN_ENROLLMENT_TOKEN` to a strong generated token before launching.
+The browser login uses username `admin` and that token as its password.
+No default token is supplied. Use HTTPS for network access. See [authentication](docs/enrollment.md).

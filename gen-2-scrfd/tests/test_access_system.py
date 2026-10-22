@@ -106,7 +106,10 @@ class TestFrameQueue(unittest.TestCase):
 
 class TestCSVReportAndREST(unittest.TestCase):
     def setUp(self):
+        from src import config
+        self.enterContext(patch.object(config, "ADMIN_ENROLLMENT_TOKEN", "test-token"))
         self.client = app.test_client()
+        self.client.environ_base["HTTP_AUTHORIZATION"] = "Bearer test-token"
         for name, kwargs in [('ensure_model_available', {}), ('detect_and_extract', {'return_value': []})]:
             patcher = patch.object(RecognitionEngine, name, **kwargs)
             patcher.start()

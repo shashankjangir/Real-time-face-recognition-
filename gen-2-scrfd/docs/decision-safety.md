@@ -6,7 +6,7 @@ After installation, inference and enrollment work offline. Enrollment stores a
 detections, no access action and no fabricated authentication record.
 
 Missing models, detection/extraction failures and camera read failures are explicit
-errors. `/health` returns HTTP 503 when the pipeline is unavailable. A runtime
+errors. Authenticated `/health` requests return HTTP 503 when the pipeline is unavailable. A runtime
 failure stops submissions and requires resolving the fault and restarting the
 service. Simulation is opt-in and cannot authorize access or web enrollment.
 

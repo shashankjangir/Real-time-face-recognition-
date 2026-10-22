@@ -55,9 +55,9 @@ class DecisionCoordinator:
             if allow and face.match_distance <= config.RECOGNITION_THRESHOLD / 2.0:
                 if hasattr(self.db, 'adapt_identity_template'):
                     try:
-                        self.db.adapt_identity_template(face.identity_id, face.encoding)
-                        if self.engine and hasattr(self.engine, 'adapt_memory_template'):
-                            self.engine.adapt_memory_template(face.identity_id, face.encoding)
+                        updated = self.db.adapt_identity_template(face.identity_id, face.encoding)
+                        if updated and self.engine:
+                            self.engine.reload_identities()
                     except Exception:
                         pass
             if outcome == 'pending':
