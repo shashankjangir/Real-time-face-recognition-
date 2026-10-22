@@ -21,6 +21,7 @@ sudo apt install -y \
     python3-picamera2 \
     python3-libcamera \
     libcamera-apps \
+    python3-opencv \
     build-essential \
     cmake \
     libopenblas-dev \
@@ -46,6 +47,8 @@ source "$VENV_PATH/bin/activate"
 echo "[4/6] Installing Python dependencies (setuptools<70, wheels, onnxruntime)..."
 pip install --upgrade pip
 pip install "setuptools<70" wheel
+# Ensure native system python3-opencv is used to prevent glibc heap corruption
+pip uninstall -y opencv-python opencv-contrib-python opencv-python-headless 2>/dev/null || true
 
 # Install dlib (parallelized on Pi 5's 4 CPU cores)
 echo "Installing dlib..."

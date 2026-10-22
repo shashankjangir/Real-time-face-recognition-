@@ -40,7 +40,8 @@ class Picamera2Backend(CameraBackend):
             self.picam2 = Picamera2()
             cam_config = self.picam2.create_video_configuration(
                 main={"format": "BGR888", "size": (self.width, self.height)},
-                controls={"FrameRate": self.fps}
+                controls={"FrameRate": self.fps},
+                buffer_count=6
             )
             self.picam2.configure(cam_config)
             # Camera Module 3 supports AF; older fixed-focus modules do not.
@@ -63,8 +64,12 @@ class Picamera2Backend(CameraBackend):
         if not self.picam2:
             return False, None
         try:
-            # BGR888 format yields native OpenCV byte order; no conversion needed.
-            return True, self.picam2.capture_array()
+            arr = self.picam2.capture_array()
+            if arr is None:
+                return False, None
+            # Detach from libcamera circular DMA buffer pool via independent heap copy
+            # to eliminate multi-threaded glibc memory corruption across workers.
+            return True, np.ascontiguousarray(arr).copy()
         except Exception as e:
             logger.error(f"Picamera2 capture error: {e}")
             return False, None
