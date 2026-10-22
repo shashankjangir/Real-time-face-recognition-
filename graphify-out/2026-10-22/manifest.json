@@ -174,9 +174,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/src/camera.py": {
-    "mtime": 1792582151.969154,
-    "seen": 1792646196.4857004,
-    "ast_hash": "693a3f584336b8c2722c0eef433ea37c",
+    "mtime": 1792656861.5091054,
+    "seen": 1792657013.4354703,
+    "ast_hash": "8890eee5b34066efb06032e9dbf477ad",
     "semantic_hash": ""
   },
   "gen-1-dlib/src/config.py": {
@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/src/database.py": {
-    "mtime": 1792584698.538738,
-    "seen": 1792646196.4857004,
-    "ast_hash": "946ac77b2f581fae62bc9b698e2a8780",
+    "mtime": 1792650961.9239335,
+    "seen": 1792657013.4354703,
+    "ast_hash": "d76d43b1a982706d7a1ef219cef809c3",
     "semantic_hash": ""
   },
   "gen-1-dlib/src/enroll.py": {
@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/tests/test_apple_features.py": {
-    "mtime": 1792585273.326614,
-    "seen": 1792646196.4857004,
-    "ast_hash": "0ab59c7a6fd3d38a5e4f08795a6f40c2",
+    "mtime": 1792650997.002542,
+    "seen": 1792657013.4354703,
+    "ast_hash": "4db2a02a235924b89fc10889b9ded501",
     "semantic_hash": ""
   },
   "gen-1-dlib/tests/test_benchmark.py": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/tests/test_dashboard.py": {
-    "mtime": 1792001802.0,
-    "seen": 1792646196.4857004,
-    "ast_hash": "9182eb251fc9ba5b4b62c8b1418544a7",
+    "mtime": 1792656894.233368,
+    "seen": 1792657013.4354703,
+    "ast_hash": "1561da564a45bfda11d4c344d049b27c",
     "semantic_hash": ""
   },
   "gen-1-dlib/tests/test_enrollment.py": {
@@ -354,9 +354,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/camera.py": {
-    "mtime": 1792582151.969154,
-    "seen": 1792646196.4857004,
-    "ast_hash": "693a3f584336b8c2722c0eef433ea37c",
+    "mtime": 1792656865.4068868,
+    "seen": 1792657013.4354703,
+    "ast_hash": "8890eee5b34066efb06032e9dbf477ad",
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/config.py": {
@@ -366,9 +366,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/database.py": {
-    "mtime": 1792584698.538738,
-    "seen": 1792646196.4857004,
-    "ast_hash": "946ac77b2f581fae62bc9b698e2a8780",
+    "mtime": 1792650978.1167731,
+    "seen": 1792657013.4354703,
+    "ast_hash": "d76d43b1a982706d7a1ef219cef809c3",
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/enroll.py": {
@@ -426,9 +426,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/tests/test_apple_features.py": {
-    "mtime": 1792585273.326614,
-    "seen": 1792646196.4857004,
-    "ast_hash": "0ab59c7a6fd3d38a5e4f08795a6f40c2",
+    "mtime": 1792651003.39255,
+    "seen": 1792657013.4354703,
+    "ast_hash": "4db2a02a235924b89fc10889b9ded501",
     "semantic_hash": ""
   },
   "gen-2-scrfd/tests/test_benchmark.py": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/tests/test_dashboard.py": {
-    "mtime": 1792001802.0,
-    "seen": 1792646196.4857004,
-    "ast_hash": "9182eb251fc9ba5b4b62c8b1418544a7",
+    "mtime": 1792656894.233368,
+    "seen": 1792657013.4354703,
+    "ast_hash": "1561da564a45bfda11d4c344d049b27c",
     "semantic_hash": ""
   },
   "gen-2-scrfd/tests/test_enrollment.py": {
@@ -492,9 +492,9 @@
     "semantic_hash": ""
   },
   "setup_rpi.sh": {
-    "mtime": 1792590851.659172,
-    "seen": 1792646196.4857004,
-    "ast_hash": "19ef154106771b04cc006476d2cb9987",
+    "mtime": 1792652724.217338,
+    "seen": 1792657013.4354703,
+    "ast_hash": "d10e93f7b8dd9cf35b0826b253857d28",
     "semantic_hash": ""
   },
   "skills-lock.json": {
@@ -528,9 +528,9 @@
     "semantic_hash": ""
   },
   "src/camera.py": {
-    "mtime": 1792582151.969154,
-    "seen": 1792646196.4857004,
-    "ast_hash": "693a3f584336b8c2722c0eef433ea37c",
+    "mtime": 1792656857.4373934,
+    "seen": 1792657013.4354703,
+    "ast_hash": "a6a27124b0f95506232af645fd7d9a82",
     "semantic_hash": ""
   },
   "src/config.py": {
@@ -540,9 +540,9 @@
     "semantic_hash": ""
   },
   "src/database.py": {
-    "mtime": 1792584698.538738,
-    "seen": 1792646196.4857004,
-    "ast_hash": "946ac77b2f581fae62bc9b698e2a8780",
+    "mtime": 1792650946.084527,
+    "seen": 1792657013.4354703,
+    "ast_hash": "d76d43b1a982706d7a1ef219cef809c3",
     "semantic_hash": ""
   },
   "src/enroll.py": {
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "src/recognition_engine.py": {
-    "mtime": 1792590351.754066,
-    "seen": 1792646196.4857004,
-    "ast_hash": "f5c7a81a17370e7825ac402215135203",
+    "mtime": 1792649328.139103,
+    "seen": 1792657013.4354703,
+    "ast_hash": "642f1e33f88109f0773dc2347c9eaf45",
     "semantic_hash": ""
   },
   "src/runtime.py": {
@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "tests/test_apple_features.py": {
-    "mtime": 1792585273.326614,
-    "seen": 1792646196.4857004,
-    "ast_hash": "0ab59c7a6fd3d38a5e4f08795a6f40c2",
+    "mtime": 1792650986.9236493,
+    "seen": 1792657013.4354703,
+    "ast_hash": "4db2a02a235924b89fc10889b9ded501",
     "semantic_hash": ""
   },
   "tests/test_benchmark.py": {
@@ -606,9 +606,9 @@
     "semantic_hash": ""
   },
   "tests/test_dashboard.py": {
-    "mtime": 1792001802.0,
-    "seen": 1792646196.4857004,
-    "ast_hash": "9182eb251fc9ba5b4b62c8b1418544a7",
+    "mtime": 1792656894.233368,
+    "seen": 1792657013.4354703,
+    "ast_hash": "1561da564a45bfda11d4c344d049b27c",
     "semantic_hash": ""
   },
   "tests/test_enrollment.py": {
@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1792590889.1673112,
-    "seen": 1792646196.4857004,
-    "ast_hash": "a458c2485e59118942fc64124abb3e62",
+    "mtime": 1792651053.4465017,
+    "seen": 1792657013.4354703,
+    "ast_hash": "30f4e5d48a4810d4e4a8d155703429df",
     "semantic_hash": ""
   },
   "archive/README.md": {
@@ -1221,6 +1221,12 @@
     "mtime": 1792582983.6067424,
     "seen": 1792646196.4857004,
     "ast_hash": "a0dadad708a4baeb4928ac229f9761b1",
+    "semantic_hash": ""
+  },
+  "recognize_stream.py": {
+    "mtime": 1792651038.7508326,
+    "seen": 1792657013.4354703,
+    "ast_hash": "384cb07aa23acfc60cb40c5bae67448d",
     "semantic_hash": ""
   }
 }

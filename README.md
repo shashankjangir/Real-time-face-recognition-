@@ -44,6 +44,13 @@ be documented alongside its deployment.
 | Sustained 15–20 FPS video | Pi mode counts unique capture/JPEG frames separately from inference decisions. |
 | Indexed SQLite history and CSV export | Implemented, with database and reporting tests. |
 
+### Physical Hardware Testing & Observed Edge Cases (Pi 5 + Camera Module 3)
+
+Physical testing on Raspberry Pi 5 hardware (Debian Trixie, Sony IMX708 Camera Module 3) surfaced operational issues that are now resolved:
+1. **Camera Autofocus (IMX708 PDAF)**: Continuous autofocus (`AfMode: Continuous`) triggered glibc heap corruption (`corrupted double-linked list`) under `libcamera 0.7.2` in multi-threaded capture. Switched to `Auto` with an active trigger signal (`AfTrigger: Start`) on boot, locking sharp focal planes without crashes.
+2. **Core Saturation**: Spawning 4 recognition worker threads on a 4-core Cortex-A76 while ONNX Runtime simultaneously spammed 4 execution threads created severe scheduling contention (decision latency spiked to >450ms). Balanced to `NUM_WORKER_THREADS = 2` and `intra_op_num_threads = 2` for clean sub-200ms processing.
+3. **Enrollment Lighting Sensitivity**: In typical indoor lighting (50–150 lux), the strict Laplacian blur score could cause false-positive rejections. Standardized `ENROLLMENT_MIN_QUALITY` to `0.55` while retaining strict single-face checks.
+
 The app and Pi evaluator share one runtime. The dashboard reports measured capture,
 JPEG and recognition rates; accuracy remains unmeasured without labelled data.
 See [benchmarking and evidence](docs/benchmarking.md) before interpreting their

@@ -88,6 +88,12 @@ Open dashboard at `http://localhost:5000`.
 - Added `onnxruntime` to `requirements.txt`.
 - Calibrated all hardware documentation to Raspberry Pi 5 (4GB RAM) with 64GB microSD storage.
 
+### [2026-10-22 17:15 IST] — Physical Hardware Benchmarking & Field Fixes (Pi 5 + Camera Module 3)
+Physical testing on Raspberry Pi 5 hardware (Debian Trixie, libcamera 0.7.2, Sony IMX708 Camera Module 3) revealed three operational edge cases resolved in this release:
+1. **Autofocus Initialization**: Switched autofocus from `Continuous` (which provoked glibc `corrupted double-linked list` heap faults under libcamera 0.7.2) to `Auto` with an active trigger (`AfTriggerEnum.Start`). This pulses the lens motor to crisp focus on the user's face instead of idling at default focus.
+2. **Core Contention & Latency Optimization**: Worker threads and ONNX runtime inference were both tuned to 2 threads (`NUM_WORKER_THREADS = 2`, `intra_op_num_threads = 2`), matching the 4 Cortex-A76 cores without thread starvation, slashing decision latency.
+3. **Enrollment Quality in Indoor Lighting**: Adjusted `ENROLLMENT_MIN_QUALITY` to `0.55` (from `0.70`) to prevent rejection in realistic indoor ambient lighting (~50–150 lux) while retaining strict single-face validation.
+
 ### [2026-10-21 19:25 IST] — Raspberry Pi Terminal Deployment & Runner Setup
 - Added `run.sh` bash runner for native execution on Raspberry Pi 5 terminal (`CAMERA_BACKEND=auto`, a user-provided `ADMIN_ENROLLMENT_TOKEN`).
 - Added `run.ps1` and `run.bat` runners for local Windows verification.

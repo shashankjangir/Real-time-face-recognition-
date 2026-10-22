@@ -48,8 +48,11 @@ class Picamera2Backend(CameraBackend):
             self.autofocus_enabled = 'AfMode' in self.picam2.camera_controls
             if self.autofocus_enabled:
                 from libcamera import controls
-                # Use Auto (single-shot/trigger) instead of Continuous to prevent glibc heap corruption on Debian Trixie / libcamera 0.7
-                self.picam2.set_controls({'AfMode': controls.AfModeEnum.Auto})
+                # Use Auto with initial trigger instead of Continuous to prevent glibc heap corruption on Debian Trixie / libcamera 0.7
+                ctrls = {'AfMode': controls.AfModeEnum.Auto}
+                if hasattr(controls, 'AfTriggerEnum'):
+                    ctrls['AfTrigger'] = controls.AfTriggerEnum.Start
+                self.picam2.set_controls(ctrls)
             # Explicitly request automatic exposure and white balance when supported.
             automatic = {key: True for key in ('AeEnable', 'AwbEnable')
                          if key in self.picam2.camera_controls}

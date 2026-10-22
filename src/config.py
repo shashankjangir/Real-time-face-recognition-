@@ -102,7 +102,7 @@ TARGET_IDENTITIES = 50     # Target enrolled identities
 TARGET_ACCURACY = 0.95     # >95% classification accuracy
 
 # Worker threads for multi-threaded inference pipeline
-NUM_WORKER_THREADS = 4
+NUM_WORKER_THREADS = 2
 
 # Logging
 LOG_LEVEL = "INFO"

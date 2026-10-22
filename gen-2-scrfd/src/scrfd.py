@@ -63,7 +63,7 @@ class SCRFDDetector:
         try:
             opts = ort.SessionOptions()
             opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            opts.intra_op_num_threads = 4  # Utilize all 4 Cortex-A76 cores on Pi 5
+            opts.intra_op_num_threads = 2  # Match 2 worker threads to 4 Cortex-A76 cores on Pi 5
             self.session = ort.InferenceSession(self.model_path, sess_options=opts, providers=["CPUExecutionProvider"])
             self.input_name = self.session.get_inputs()[0].name
             self.output_names = [o.name for o in self.session.get_outputs()]
