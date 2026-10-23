@@ -30,6 +30,19 @@ class DashboardTests(unittest.TestCase):
     def quality(self, token='test-token'):
         return self.client.post('/api/enrollment/quality', headers={'Authorization':'Bearer '+token})
 
+    def test_quality_threshold_config_endpoint(self):
+        r = self.client.get('/api/config/quality')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.get_json()['threshold'], config.ENROLLMENT_MIN_QUALITY)
+
+        r = self.client.post('/api/config/quality', json={'threshold': 0.62})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(config.ENROLLMENT_MIN_QUALITY, 0.62)
+
+        self.assertEqual(self.client.post('/api/config/quality', json={'threshold': 0.50}).status_code, 400)
+        self.assertEqual(self.client.post('/api/config/quality', json={'threshold': 0.75}).status_code, 400)
+        config.ENROLLMENT_MIN_QUALITY = 0.70
+
     def test_dashboard_renders_without_camera_and_assets_are_local(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)

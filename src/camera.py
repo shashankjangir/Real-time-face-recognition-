@@ -74,6 +74,9 @@ class Picamera2Backend(CameraBackend):
             arr = self.picam2.capture_array()
             if arr is None:
                 return False, None
+            if hasattr(arr, 'shape') and len(arr.shape) >= 2:
+                if arr.shape[1] != self.width or arr.shape[0] != self.height:
+                    self.width, self.height = int(arr.shape[1]), int(arr.shape[0])
             # Detach from libcamera circular DMA buffer pool via independent heap copy
             # to eliminate multi-threaded glibc memory corruption across workers.
             return True, np.ascontiguousarray(arr).copy()
@@ -108,12 +111,19 @@ class OpenCVBackend(CameraBackend):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
-        logger.info(f"OpenCV VideoCapture({self.index}) opened.")
+        act_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        act_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        if act_w > 0 and act_h > 0:
+            self.width, self.height = act_w, act_h
+        logger.info(f"OpenCV VideoCapture({self.index}) opened at {self.width}x{self.height}.")
 
     def read(self) -> Tuple[bool, Optional[np.ndarray]]:
         if not self.cap or not self.cap.isOpened():
             return False, None
         ret, frame = self.cap.read()
+        if ret and frame is not None and hasattr(frame, 'shape') and len(frame.shape) >= 2:
+            if frame.shape[1] != self.width or frame.shape[0] != self.height:
+                self.width, self.height = int(frame.shape[1]), int(frame.shape[0])
         return ret, frame
 
     def stop(self):
@@ -279,6 +289,12 @@ class CameraManager:
                 raise RuntimeError(self.last_error)
             snapshot = (self.latest_frame.copy() if self.latest_frame is not None else None, self.frame_count)
             return (*snapshot, self.delivered_at) if timestamped else snapshot
+
+    def get_resolution(self) -> Tuple[int, int]:
+        with self.frame_lock:
+            if self.latest_frame is not None and hasattr(self.latest_frame, 'shape') and len(self.latest_frame.shape) >= 2:
+                return int(self.latest_frame.shape[1]), int(self.latest_frame.shape[0])
+        return getattr(self.backend, 'width', config.CAMERA_WIDTH), getattr(self.backend, 'height', config.CAMERA_HEIGHT)
 
     def get_fps(self) -> float:
         with self.frame_lock:

@@ -58,7 +58,7 @@ h1 span { color: var(--muted); }
 .camera-top:focus-visible { outline-offset: -4px; }
 #clock,.stat,.quality-number,#quality-components,dd,td { font-variant-numeric: tabular-nums; }
 #clock { min-width: 8ch; text-align: right; }
-.camera-stage { position: relative; aspect-ratio: 16/9; display: grid; place-items: center; background: var(--stage); }
+.camera-stage { position: relative; aspect-ratio: var(--feed-aspect, 4/3); width: 100%; display: grid; place-items: center; background: var(--stage); transition: aspect-ratio 200ms ease; }
 .camera-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; outline: 1px solid oklch(1 0 0 / .1); outline-offset: -1px; }
 .feed-empty { padding: 24px; text-align: center; max-width: 390px; }
 .focus-mark { width: 48px; height: 48px; color: #91b2c7; margin: 0 auto 18px; }
@@ -230,3 +230,9 @@ html.has-camera-dock body { padding-bottom: var(--camera-dock-space,320px); }
   *,*::before,*::after { transition: none !important; animation: none !important; }
   .pill:active:not(:disabled) { transform: none; }
 }
+
+.quality-knob-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid #c4cfd3; }
+.quality-knob-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--ink); }
+#quality-knob-value { font-family: var(--display); font-size: 16px; color: var(--blue); font-variant-numeric: tabular-nums; }
+#quality-knob { width: 100%; height: 6px; border-radius: 3px; accent-color: var(--blue); cursor: pointer; }
+.quality-knob-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; }

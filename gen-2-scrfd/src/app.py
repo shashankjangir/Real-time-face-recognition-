@@ -134,7 +134,8 @@ def api_stats():
         'classification_accuracy': None,
         'camera': {'backend': type(camera_manager.backend).__name__,
                    'autofocus': bool(getattr(camera_manager.backend, 'autofocus_enabled', False)),
-                   'resolution': [config.CAMERA_WIDTH, config.CAMERA_HEIGHT]},
+                   'resolution': list(camera_manager.get_resolution()) if hasattr(camera_manager, 'get_resolution') and callable(camera_manager.get_resolution) and isinstance(camera_manager.get_resolution(), (tuple, list)) else [config.CAMERA_WIDTH, config.CAMERA_HEIGHT]},
+        'quality_threshold': config.ENROLLMENT_MIN_QUALITY,
         'fps': telemetry['capture_fps'],
         'telemetry': telemetry,
         'avg_latency_ms': round(latency['mean_ms'], 1) if latency else None,
@@ -284,6 +285,26 @@ def api_enroll():
         'identity_id': ident_id,
         'quality_score': quality
     })
+
+
+@app.route('/api/config/quality', methods=['GET', 'POST'])
+def api_quality_config():
+    """Adjustable capture quality threshold between 0.55 and 0.70."""
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        val = data.get('threshold')
+        if val is None:
+            val = request.form.get('threshold')
+        try:
+            val = float(val)
+        except (TypeError, ValueError):
+            return jsonify({'status': 'error', 'message': 'Threshold must be a number between 0.55 and 0.70.'}), 400
+        val = round(val, 2)
+        if not (0.55 <= val <= 0.70):
+            return jsonify({'status': 'error', 'message': 'Threshold must be between 0.55 and 0.70.'}), 400
+        config.ENROLLMENT_MIN_QUALITY = val
+        return jsonify({'status': 'success', 'threshold': config.ENROLLMENT_MIN_QUALITY})
+    return jsonify({'status': 'success', 'threshold': config.ENROLLMENT_MIN_QUALITY})
 
 
 @app.route('/health')

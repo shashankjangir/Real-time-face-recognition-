@@ -27,8 +27,22 @@ function connectFeed() {
   feedMessage("Connecting to your camera", "Waiting for the station's live feed.");
   $("feed").src = "/stream.mjpg?t=" + Date.now();
 }
+function adaptFeed() {
+  const feed = $("feed");
+  if (feed && feed.naturalWidth > 0 && feed.naturalHeight > 0) {
+    const ratio = `${feed.naturalWidth} / ${feed.naturalHeight}`;
+    const stage = $("camera-stage");
+    if (stage) stage.style.aspectRatio = ratio;
+    document.documentElement.style.setProperty("--feed-aspect", ratio);
+  }
+}
 $("feed").addEventListener("load", () => {
-  if (!paused) { $("feed").hidden = false; $("feed-empty").hidden = true; text("feed-label", "CAM 01 · LIVE"); }
+  if (!paused) {
+    $("feed").hidden = false;
+    $("feed-empty").hidden = true;
+    text("feed-label", "CAM 01 · LIVE");
+    adaptFeed();
+  }
 });
 $("feed").addEventListener("error", () => {
   if (!paused) { feedMessage("Camera feed unavailable", "Check the camera connection and station status, then reconnect."); text("feed-label", "CAM 01 · UNAVAILABLE"); }
@@ -62,6 +76,12 @@ async function updateStats() {
     text("drops", [counts.dropped, counts.stale, counts.out_of_order].map(v => v ?? "—").join(" / "));
     text("metric-note", "Rates since startup. Capture and recognition are measured separately.");
     const camera = data.camera || {};
+    if (Array.isArray(camera.resolution) && camera.resolution.length === 2 && camera.resolution[0] > 0 && camera.resolution[1] > 0) {
+      const stage = $("camera-stage");
+      if (stage && (!stage.style.aspectRatio || stage.style.aspectRatio === "auto")) {
+        stage.style.aspectRatio = `${camera.resolution[0]} / ${camera.resolution[1]}`;
+      }
+    }
     text("camera-description", (camera.backend === "Picamera2Backend" ? "Pi Camera" : camera.backend === "SyntheticBackend" ? "Simulation · access disabled" : "Camera") + (camera.resolution ? " / " + camera.resolution.join(" × ") : ""));
     text("focus-state", camera.autofocus ? "Continuous autofocus enabled" : "Autofocus not reported by this camera");
   } catch (error) {
@@ -84,9 +104,56 @@ function setBusy(value, action = "") {
   $("enroll-form").setAttribute("aria-busy", String(value));
   if (value) text("form-status", action);
 }
+let currentThreshold = parseFloat(document.body.dataset.qualityThreshold) || 0.70;
+let lastQualityData = null;
+
+function setQualityThreshold(val, syncBackend = true) {
+  val = Math.max(0.55, Math.min(0.70, Math.round(val * 100) / 100));
+  currentThreshold = val;
+  const formatted = val.toFixed(2);
+  const knob = $("quality-knob");
+  if (knob && knob.value !== formatted) knob.value = formatted;
+  const knobVal = $("quality-knob-value");
+  if (knobVal) text("quality-knob-value", formatted);
+  const req = $("quality-required");
+  if (req) text("quality-required", "Required: " + formatted);
+  const marker = $("quality-marker");
+  if (marker) marker.style.left = (val * 100) + "%";
+  document.body.dataset.qualityThreshold = formatted;
+
+  if (lastQualityData && typeof lastQualityData.score === "number") {
+    text("quality-state", lastQualityData.score >= val ? "READY TO CAPTURE" : "ADJUST CAPTURE");
+  }
+
+  if (syncBackend) {
+    try { localStorage.setItem("face_access_quality_threshold", formatted); } catch {}
+    api("/api/config/quality", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({threshold: val})
+    }).catch(err => console.debug("Threshold sync note:", err.message));
+  }
+}
+
+const knobEl = $("quality-knob");
+if (knobEl) {
+  knobEl.addEventListener("input", e => setQualityThreshold(parseFloat(e.target.value), false));
+  knobEl.addEventListener("change", e => setQualityThreshold(parseFloat(e.target.value), true));
+}
+
+try {
+  const savedThresh = localStorage.getItem("face_access_quality_threshold");
+  if (savedThresh) {
+    const num = parseFloat(savedThresh);
+    if (!isNaN(num) && num >= 0.55 && num <= 0.70) setQualityThreshold(num, true);
+  }
+} catch {}
+
 function renderQuality(data) {
+  lastQualityData = data;
   text("quality-score", number(data.score, 2));
-  text("quality-state", data.ready ? "READY TO CAPTURE" : "ADJUST CAPTURE");
+  const isReady = typeof data.score === "number" ? data.score >= currentThreshold : !!data.ready;
+  text("quality-state", isReady ? "READY TO CAPTURE" : "ADJUST CAPTURE");
   $("quality-fill").style.width = Math.max(0, Math.min(100, (data.score || 0) * 100)) + "%";
   for (const key of ["sharpness", "brightness", "size"]) {
     const component = (data.components || {})[key];
