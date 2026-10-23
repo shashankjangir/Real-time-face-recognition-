@@ -339,8 +339,13 @@ def api_enroll():
 def api_quality_config():
     """Adjustable capture quality threshold between 0.55 and 0.70."""
     if request.method == 'POST':
-        data = request.get_json(silent=True) or {}
-        val = data.get('threshold')
+        auth_error = require_administrator()
+        if auth_error is not None:
+            return auth_error
+        data = request.get_json(silent=True)
+        if request.is_json and not isinstance(data, dict):
+            return jsonify({'status': 'error', 'message': 'A JSON object is required.'}), 400
+        val = (data or {}).get('threshold')
         if val is None:
             val = request.form.get('threshold')
         try:

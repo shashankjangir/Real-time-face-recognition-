@@ -26,9 +26,36 @@ class DashboardTests(unittest.TestCase):
         self.enterContext(patch.object(web, 'camera_manager', self.camera))
         self.enterContext(patch.object(web, 'recognition_engine', self.engine))
         self.enterContext(patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', 'test-token'))
+        self.enterContext(patch.object(config, 'ENROLLMENT_MIN_QUALITY', 0.70))
 
     def quality(self, token='test-token'):
         return self.client.post('/api/enrollment/quality', headers={'Authorization':'Bearer '+token})
+
+    def test_quality_threshold_rejects_unauthorized_changes(self):
+        client = web.app.test_client()
+        before = config.ENROLLMENT_MIN_QUALITY
+        self.assertEqual(client.get('/api/config/quality').status_code, 200)
+        for headers in ({}, {'Authorization': 'Bearer wrong'}):
+            with self.subTest(headers=headers):
+                response = client.post('/api/config/quality', json={'threshold': 0.55}, headers=headers)
+                self.assertEqual(response.status_code, 401)
+                self.assertEqual(config.ENROLLMENT_MIN_QUALITY, before)
+        self.init.assert_not_called()
+
+    def test_quality_threshold_requires_configured_password(self):
+        before = config.ENROLLMENT_MIN_QUALITY
+        with patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', ''):
+            response = self.client.post('/api/config/quality', json={'threshold': 0.55})
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(config.ENROLLMENT_MIN_QUALITY, before)
+
+    def test_quality_threshold_rejects_invalid_payloads(self):
+        before = config.ENROLLMENT_MIN_QUALITY
+        for payload in ([], [0.55], 'invalid', {'threshold': 'NaN'}, {'threshold': 'Infinity'}, {}):
+            with self.subTest(payload=payload):
+                response = self.client.post('/api/config/quality', json=payload)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(config.ENROLLMENT_MIN_QUALITY, before)
 
     def test_quality_threshold_config_endpoint(self):
         r = self.client.get('/api/config/quality')

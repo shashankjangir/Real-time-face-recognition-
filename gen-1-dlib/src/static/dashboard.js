@@ -116,7 +116,7 @@ let currentThreshold = parseFloat(document.body.dataset.qualityThreshold) || 0.7
 let lastConfirmedThreshold = currentThreshold;
 let lastQualityData = null;
 
-function setQualityThreshold(val, syncBackend = true) {
+async function setQualityThreshold(val, syncBackend = true) {
   val = Math.max(0.55, Math.min(0.70, Math.round(val * 100) / 100));
   currentThreshold = val;
   const formatted = val.toFixed(2);
@@ -136,17 +136,17 @@ function setQualityThreshold(val, syncBackend = true) {
 
   if (syncBackend) {
     const prevConfirmed = lastConfirmedThreshold;
-    api("/api/config/quality", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({threshold: val})
-    }).then(() => {
+    try {
+      await api("/api/config/quality", {
+        method: "POST",
+        headers: credentials(),
+        body: JSON.stringify({threshold: val})
+      });
       lastConfirmedThreshold = val;
-      try { localStorage.setItem("face_access_quality_threshold", formatted); } catch {}
-    }).catch(err => {
+    } catch (err) {
       text("form-status", "Quality threshold save failed: " + err.message);
       setQualityThreshold(prevConfirmed, false);
-    });
+    }
   }
 }
 
@@ -155,14 +155,6 @@ if (knobEl) {
   knobEl.addEventListener("input", e => setQualityThreshold(parseFloat(e.target.value), false));
   knobEl.addEventListener("change", e => setQualityThreshold(parseFloat(e.target.value), true));
 }
-
-try {
-  const savedThresh = localStorage.getItem("face_access_quality_threshold");
-  if (savedThresh) {
-    const num = parseFloat(savedThresh);
-    if (!isNaN(num) && num >= 0.55 && num <= 0.70) setQualityThreshold(num, true);
-  }
-} catch {}
 
 let smoothedQualityScore = null;
 

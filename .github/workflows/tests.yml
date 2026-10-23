@@ -40,5 +40,7 @@ jobs:
         run: python scripts/run_tests.py
       - name: Check Python syntax
         run: python -m compileall -q src tests
+      - name: Check quality control authentication
+        run: node tests/test_quality.js
       - name: Check speech behavior
         run: node tests/test_speech.js
