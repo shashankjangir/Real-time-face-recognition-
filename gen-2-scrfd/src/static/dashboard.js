@@ -164,19 +164,120 @@ try {
   }
 } catch {}
 
-function renderQuality(data) {
+let smoothedQualityScore = null;
+
+function renderQuality(data, isManual = true) {
   lastQualityData = data;
-  text("quality-score", number(data.score, 2));
-  const isReady = typeof data.score === "number" ? data.score >= currentThreshold : !!data.ready;
-  text("quality-state", isReady ? "READY TO CAPTURE" : "ADJUST CAPTURE");
-  $("quality-fill").style.width = Math.max(0, Math.min(100, (data.score || 0) * 100)) + "%";
+  const scoreNum = typeof data.score === "number" ? data.score : null;
+  text("quality-score", scoreNum !== null ? number(scoreNum, 2) : "—");
+  const isReady = scoreNum !== null ? scoreNum >= currentThreshold : !!data.ready;
+  const stateEl = $("quality-state");
+  if (stateEl) {
+    if (scoreNum !== null) {
+      stateEl.textContent = isReady ? "READY TO CAPTURE" : "ADJUST CAPTURE";
+      stateEl.classList.toggle("is-ready", isReady);
+      stateEl.classList.toggle("is-adjust", !isReady);
+    } else {
+      stateEl.textContent = data.face_count === 0 ? "NO FACE" : (data.face_count > 1 ? "MULTIPLE FACES" : "NOT CHECKED");
+      stateEl.classList.remove("is-ready", "is-adjust");
+    }
+  }
+  const fill = $("quality-fill");
+  if (fill) fill.style.width = Math.max(0, Math.min(100, (scoreNum || 0) * 100)) + "%";
   for (const key of ["sharpness", "brightness", "size"]) {
     const component = (data.components || {})[key];
     text("q-" + key, component ? number(component.value, key === "size" ? 0 : 1) + " " + component.unit : "—");
   }
-  $("quality-tips").replaceChildren(...(data.guidance || []).map(tip => {const li = document.createElement("li"); li.textContent = tip; return li;}));
-  text("quality-time", "Checked " + new Date().toLocaleTimeString() + ". This result describes that capture only.");
+  if (data.guidance && data.guidance.length) {
+    $("quality-tips").replaceChildren(...data.guidance.map(tip => {const li = document.createElement("li"); li.textContent = tip; return li;}));
+  }
+  if (isManual) {
+    text("quality-time", "Checked " + new Date().toLocaleTimeString() + ". This result describes that capture only.");
+  }
 }
+
+let qualityPollTimer = null;
+async function pollLiveQuality() {
+  if (!paused && !document.hidden) {
+    try {
+      const data = await api("/api/quality/live");
+      if (data && (data.status === "success" || data.status === "no_frame")) {
+        if (typeof data.score === "number") {
+          smoothedQualityScore = smoothedQualityScore === null
+            ? data.score
+            : (smoothedQualityScore * 0.72 + data.score * 0.28);
+          renderQuality({ ...data, score: smoothedQualityScore }, false);
+          text("quality-time", "Live camera active · " + Math.round(smoothedQualityScore * 100) + "% quality score");
+        } else {
+          smoothedQualityScore = null;
+          renderQuality({ ...data, score: null }, false);
+          text("quality-time", (data.guidance && data.guidance[0]) || "Position yourself in front of the camera.");
+        }
+      }
+    } catch {}
+  }
+  qualityPollTimer = setTimeout(pollLiveQuality, 450);
+}
+pollLiveQuality();
+
+function updateQualityGlide() {
+  const card = $("quality-card");
+  const initAnchor = $("quality-anchor-initial");
+  const targetAnchor = $("quality-anchor-enrollment");
+  if (!card || !initAnchor || !targetAnchor) return;
+
+  if (window.innerWidth <= 1000) {
+    card.style.transform = "";
+    return;
+  }
+
+  const initRect = initAnchor.getBoundingClientRect();
+  const targetRect = targetAnchor.getBoundingClientRect();
+
+  const initPageX = initRect.left + window.scrollX;
+  const initPageY = initRect.top + window.scrollY;
+  const targetPageX = targetRect.left + window.scrollX;
+  const targetPageY = targetRect.top + window.scrollY;
+
+  const deltaX = targetPageX - initPageX;
+  const deltaY = targetPageY - initPageY;
+
+  const scrollY = window.scrollY;
+  const scrollStart = Math.max(0, initAnchor.offsetTop - 40);
+  const scrollEnd = Math.max(scrollStart + 80, targetAnchor.offsetTop - 140);
+
+  const rawT = (scrollY - scrollStart) / (scrollEnd - scrollStart);
+  const t = Math.max(0, Math.min(1, rawT));
+
+  const ease = 0.5 - 0.5 * Math.cos(Math.PI * t);
+
+  const curX = deltaX * ease;
+  const curY = deltaY * ease;
+
+  card.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`;
+
+  const cameraShell = $("camera-shell");
+  if (cameraShell && cameraShell.classList.contains("is-floating")) {
+    if (!dockPosition) {
+      if (t > 0.08) {
+        cameraShell.style.left = "24px";
+        cameraShell.style.right = "auto";
+        cameraShell.style.transform = "none";
+      } else {
+        cameraShell.style.left = "50%";
+        cameraShell.style.right = "auto";
+        cameraShell.style.transform = "translateX(-50%)";
+      }
+      const streamScale = 1.0 - (0.22 * ease);
+      cameraShell.style.setProperty("--dock-scale", streamScale.toFixed(3));
+    }
+  }
+}
+
+window.addEventListener("scroll", () => requestAnimationFrame(updateQualityGlide), {passive: true});
+window.addEventListener("resize", () => requestAnimationFrame(updateQualityGlide));
+requestAnimationFrame(updateQualityGlide);
+
 $("quality-check").addEventListener("click", async () => {
   if (busy) return;
   try {

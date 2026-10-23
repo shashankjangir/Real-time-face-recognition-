@@ -142,3 +142,8 @@ The web dashboard and live stream require no login credentials. Enrollment is pr
   - Recognition announcements immediately react to changes of persons in camera view: when a new person enters or visible individuals change, their name or "Unknown" is announced without waiting for previous cooldowns.
 - **Creator Profile & Footer Credits**:
   - Embedded developer attribution in the dashboard footer: **Shashank Jangir** · IIT Delhi · Electrical Engineering ([github.com/shashankjangir](https://github.com/shashankjangir)).
+- **Compact Capture Quality Panel with Diagonal Scroll Glide**:
+  - Restructured the Capture Quality card into a compact, unified widget initially seated in the specifications sidebar directly above Station Readout.
+  - On scrolling down into the enrollment section, the card glides diagonally across the interface via hardware-accelerated 2D translation and natural cosine easing, seamlessly docking to the right of the enrollment form.
+  - Added public live quality feedback endpoint (`/api/quality/live`) updating heuristics (sharpness, brightness, face size) continuously with Exponential Moving Average (EMA) smoothing to eliminate visual flicker.
+  - Floating camera dock smoothly shifts to the bottom-left and scales down gradually when entering the enrollment section to avoid obstruction.

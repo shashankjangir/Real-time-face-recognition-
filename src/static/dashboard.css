@@ -100,20 +100,217 @@ input::placeholder { color: var(--muted); }
 .token-field input { min-width: 0; }
 .form-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .form-status { margin-top: 16px; min-height: 24px; font-size: 14px; }
-.quality-card { padding: 28px; background: #e7ecec; border-radius: 12px; align-self: start; }
-.quality-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; }
-.status-pill { color: var(--muted); font-size: 11px; }
-.quality-number { display: flex; align-items: center; gap: 16px; margin: 24px 0; }
-.quality-number strong { font-family: var(--display); font-size: 60px; line-height: 1; font-weight: 500; }
-.quality-fraction { display: flex; flex-direction: column; font-size: 14px; color: var(--muted); }
-.quality-fraction small { margin-top: 6px; }
-.quality-meter { height: 6px; position: relative; background: #bfccd2; border-radius: 3px; }
-#quality-fill { width: 0; height: 100%; background: var(--blue); border-radius: inherit; }
-.quality-meter > span { position: absolute; top: -4px; width: 2px; height: 14px; background: var(--ink); }
-.quality-components { margin-top: 24px; font-variant-numeric: tabular-nums; }
-.quality-components > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #c4cfd3; font-size: 14px; }
-.quality-components small { color: var(--muted); font-size: 11px; margin-left: 8px; }
-#quality-tips { padding-left: 18px; font-size: 13px; }
+/* Quality Anchor Slots & Compact Gliding Card */
+.quality-anchor {
+  position: relative;
+  width: 100%;
+}
+
+.quality-anchor-initial {
+  margin-bottom: 20px;
+}
+
+.quality-anchor-enrollment {
+  width: 100%;
+  min-height: 380px;
+  align-self: start;
+}
+
+.quality-card {
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(16, 25, 31, 0.05), 0 4px 14px rgba(16, 25, 31, 0.04);
+  position: relative;
+  z-index: 25;
+  width: 100%;
+  will-change: transform;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.quality-card:hover {
+  border-color: #b0c4cf;
+  box-shadow: 0 2px 6px rgba(16, 25, 31, 0.06), 0 6px 20px rgba(16, 25, 31, 0.06);
+}
+
+.quality-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.quality-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.quality-icon {
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+.quality-title {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+
+.status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: #f0f4f7;
+  border: 1px solid var(--line);
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.status-pill.is-ready {
+  background: #e1f2e9;
+  color: #195c42;
+  border-color: rgba(25, 92, 66, 0.25);
+}
+
+.status-pill.is-adjust {
+  background: #fff4df;
+  color: #853e11;
+  border-color: rgba(133, 62, 17, 0.25);
+}
+
+.quality-number {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 6px 0 10px;
+}
+
+.quality-number strong {
+  font-family: var(--display);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.quality-fraction {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.quality-fraction small {
+  font-size: 11px;
+}
+
+.quality-meter {
+  height: 5px;
+  position: relative;
+  background: #e2e8f0;
+  border-radius: 3px;
+  margin-bottom: 12px;
+}
+
+#quality-fill {
+  width: 0;
+  height: 100%;
+  background: var(--blue);
+  border-radius: inherit;
+  transition: width 200ms ease;
+}
+
+.quality-meter > span {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 11px;
+  background: var(--ink);
+  border-radius: 1px;
+}
+
+.quality-knob-panel {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #eef2f6;
+}
+
+.quality-knob-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+#quality-knob {
+  width: 100%;
+  height: 4px;
+  accent-color: var(--blue);
+  cursor: pointer;
+  margin: 2px 0;
+  min-height: 20px;
+  padding: 0;
+}
+
+.quality-knob-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.quality-components {
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.quality-comp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px;
+}
+
+.quality-comp-row small {
+  color: var(--muted);
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.quality-comp-row .comp-val {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.quality-tips-compact {
+  margin: 8px 0 2px;
+  padding-left: 16px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+#quality-time {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
 .history-toolbar,.history-filters { display: flex; align-items: end; gap: 16px; }
 .history-toolbar { justify-content: space-between; }
 .filter-group { width: 220px; }
@@ -169,7 +366,7 @@ dialog > .form-field { margin-top: 24px; }
   .t-modal { transition: none !important; }
 }
 
-.camera-shell.is-floating:not(:fullscreen) { position: fixed; z-index: 40; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(400px,calc(100vw - 32px)); box-shadow: 0 8px 32px #10191f40; }
+.camera-shell.is-floating:not(:fullscreen) { position: fixed; z-index: 40; left: 50%; bottom: 24px; transform: translateX(-50%) scale(var(--dock-scale, 1)); transform-origin: bottom left; width: min(380px, calc(100vw - 32px)); box-shadow: 0 8px 32px #10191f40; transition: transform 180ms ease, left 250ms ease, right 250ms ease; }
 .camera-shell.is-floating:not(:fullscreen) .camera-stage { aspect-ratio: var(--feed-aspect, 4/3); width: 100%; max-height: 28vh; min-height: 120px; transition: aspect-ratio 200ms ease; }
 .camera-shell.is-floating:not(:fullscreen) .camera-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .camera-shell.is-floating:not(:fullscreen) .camera-top,.camera-shell.is-floating:not(:fullscreen) .camera-bottom { padding: 6px 12px; }

@@ -234,6 +234,38 @@ def require_administrator():
         return jsonify({'status': 'error', 'message': 'Administrator authentication required.'}), 401, {'WWW-Authenticate': 'Bearer'}
 
 
+
+@app.route('/api/quality/live')
+def api_live_quality():
+    """Live face capture quality heuristic streamed continuously from fresh camera frame."""
+    initialize_pipeline()
+    from .camera import SyntheticBackend
+    from .enroll import face_quality_report
+    if isinstance(camera_manager.backend, SyntheticBackend):
+        return jsonify(status='unavailable', message='Quality checks require a real camera.'), 200
+    frame = camera_manager.get_frame()
+    if frame is None:
+        return jsonify(status='no_frame', ready=False, score=None, threshold=config.ENROLLMENT_MIN_QUALITY, components={}), 200
+    try:
+        detections = recognition_engine.detector.detect_faces(frame)
+    except Exception:
+        return jsonify(status='error', ready=False, score=None, threshold=config.ENROLLMENT_MIN_QUALITY, components={}), 200
+
+    if len(detections) != 1:
+        msg = 'No face in view. Position yourself in front of the camera.' if not detections else 'Multiple faces in view. Position one person for enrollment.'
+        return jsonify(
+            status='success',
+            face_count=len(detections),
+            ready=False,
+            score=None,
+            threshold=config.ENROLLMENT_MIN_QUALITY,
+            components={},
+            guidance=[msg]
+        ), 200
+    box, _ = detections[0]
+    rep = face_quality_report(frame, box)
+    return jsonify(status='success', face_count=1, **rep), 200
+
 @app.route('/api/enrollment/quality', methods=['POST'])
 def enrollment_quality():
     auth_error = require_administrator()
