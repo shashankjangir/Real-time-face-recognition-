@@ -1,7 +1,7 @@
 # Graph Report - 3. Real-time-face-recognition-  (2026-10-23)
 
 ## Corpus Check
-- 210 files · ~146,428 words
+- 210 files · ~147,151 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 20 file(s) not represented in the graph (top: (none) 4, .example 3, .csv 3)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `63b07d33`
+- Built from commit: `ad12d490`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

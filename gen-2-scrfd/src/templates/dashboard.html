@@ -70,67 +70,7 @@
       </div>
 
       <aside class="specifications" aria-label="Station measurements">
-        <div class="quality-anchor quality-anchor-initial" id="quality-anchor-initial">
-          <div class="quality-card compact-card" id="quality-card">
-            <div class="quality-heading">
-              <div class="quality-title-group">
-                <svg class="quality-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-                <span class="quality-title">CAPTURE QUALITY</span>
-              </div>
-              <span class="status-pill" id="quality-state">NOT CHECKED</span>
-            </div>
-
-            <div class="quality-number">
-              <strong id="quality-score">—</strong>
-              <div class="quality-fraction">
-                <span>/ 1.00</span>
-                <small id="quality-required">Required: {{ '%.2f'|format(quality_threshold) }}</small>
-              </div>
-            </div>
-
-            <div class="quality-meter">
-              <div id="quality-fill"></div>
-              <span id="quality-marker" style="left: {{ quality_threshold * 100 }}%" title="Enrollment threshold"></span>
-            </div>
-
-            <div class="quality-knob-panel">
-              <div class="quality-knob-head">
-                <label for="quality-knob">Capture quality threshold</label>
-                <span id="quality-knob-value">{{ '%.2f'|format(quality_threshold) }}</span>
-              </div>
-              <input type="range" id="quality-knob" min="0.55" max="0.70" step="0.01" value="{{ '%.2f'|format(quality_threshold) }}" aria-label="Adjust capture quality threshold between 0.55 and 0.70">
-              <div class="quality-knob-labels">
-                <small>0.55 (Lenient)</small>
-                <small>0.70 (Strict)</small>
-              </div>
-            </div>
-
-            <div class="quality-components">
-              <div class="quality-comp-row">
-                <span>Sharpness <small>40%</small></span>
-                <span id="q-sharpness" class="comp-val">—</span>
-              </div>
-              <div class="quality-comp-row">
-                <span>Brightness <small>30%</small></span>
-                <span id="q-brightness" class="comp-val">—</span>
-              </div>
-              <div class="quality-comp-row">
-                <span>Face size <small>30%</small></span>
-                <span id="q-size" class="comp-val">—</span>
-              </div>
-            </div>
-
-            <ul id="quality-tips" class="quality-tips-compact">
-              <li>Check face quality to see what needs attention.</li>
-            </ul>
-            <p class="field-note" id="quality-time">Awaiting live capture.</p>
-          </div>
-        </div>
-
-        <div class="spec-card">
+<div class="spec-card">
           <h2 class="spec-heading">Station readout</h2>
           <div class="spec-list">
             <div class="spec">
@@ -192,6 +132,64 @@
             </div>
           </div>
         </div>
+
+        <div class="quality-card compact-card" id="quality-card">
+          <div class="quality-heading">
+            <div class="quality-title-group">
+              <svg class="quality-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <span class="quality-title">CAPTURE QUALITY</span>
+            </div>
+            <span class="status-pill" id="quality-state">NOT CHECKED</span>
+          </div>
+
+          <div class="quality-number">
+            <strong id="quality-score">—</strong>
+            <div class="quality-fraction">
+              <span>/ 1.00</span>
+              <small id="quality-required">Required: {{ '%.2f'|format(quality_threshold) }}</small>
+            </div>
+          </div>
+
+          <div class="quality-meter">
+            <div id="quality-fill"></div>
+            <span id="quality-marker" style="left: {{ quality_threshold * 100 }}%" title="Enrollment threshold"></span>
+          </div>
+
+          <div class="quality-knob-panel">
+            <div class="quality-knob-head">
+              <label for="quality-knob">Capture quality threshold</label>
+              <span id="quality-knob-value">{{ '%.2f'|format(quality_threshold) }}</span>
+            </div>
+            <input type="range" id="quality-knob" min="0.55" max="0.70" step="0.01" value="{{ '%.2f'|format(quality_threshold) }}" aria-label="Adjust capture quality threshold between 0.55 and 0.70">
+            <div class="quality-knob-labels">
+              <small>0.55 (Lenient)</small>
+              <small>0.70 (Strict)</small>
+            </div>
+          </div>
+
+          <div class="quality-components">
+            <div class="quality-comp-row">
+              <span>Sharpness <small>40%</small></span>
+              <span id="q-sharpness" class="comp-val">—</span>
+            </div>
+            <div class="quality-comp-row">
+              <span>Brightness <small>30%</small></span>
+              <span id="q-brightness" class="comp-val">—</span>
+            </div>
+            <div class="quality-comp-row">
+              <span>Face size <small>30%</small></span>
+              <span id="q-size" class="comp-val">—</span>
+            </div>
+          </div>
+
+          <ul id="quality-tips" class="quality-tips-compact">
+            <li>Check face quality to see what needs attention.</li>
+          </ul>
+          <p class="field-note" id="quality-time">Awaiting live capture.</p>
+        </div>
       </aside>
     </div>
 
@@ -240,8 +238,10 @@
         </form>
       </div>
 
-            <div class="quality-anchor quality-anchor-enrollment" id="quality-anchor-enrollment" aria-hidden="true">
-        <!-- Target slot for the gliding compact quality card -->
+                  <div class="enrollment-camera-slot" id="enrollment-camera-slot">
+        <div class="stream-slot-placeholder">
+          <span class="stream-slot-label">Live Camera Feed</span>
+        </div>
       </div>
     </div>
   </section>

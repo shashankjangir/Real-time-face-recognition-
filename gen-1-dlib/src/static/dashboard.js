@@ -220,63 +220,90 @@ async function pollLiveQuality() {
 }
 pollLiveQuality();
 
-function updateQualityGlide() {
-  const card = $("quality-card");
-  const initAnchor = $("quality-anchor-initial");
-  const targetAnchor = $("quality-anchor-enrollment");
-  if (!card || !initAnchor || !targetAnchor) return;
+// Continuous Camera Stream Gliding & Proximity Repulsion
+function updateCameraStreamGlide() {
+  const shell = $("camera-shell");
+  const topSlot = $("camera-slot");
+  const targetSlot = $("enrollment-camera-slot");
+  const enrollCard = document.querySelector(".enrollment-card");
+  if (!shell || !topSlot || !targetSlot) return;
 
-  if (window.innerWidth <= 1000) {
-    card.style.transform = "";
+  if (document.fullscreenElement) {
+    shell.style.transform = "";
+    if (enrollCard) enrollCard.style.transform = "";
     return;
   }
 
-  const initRect = initAnchor.getBoundingClientRect();
-  const targetRect = targetAnchor.getBoundingClientRect();
+  // On narrow screens (single column), keep standard natural flow
+  if (window.innerWidth <= 1000) {
+    shell.style.transform = "";
+    if (enrollCard) enrollCard.style.transform = "";
+    return;
+  }
 
-  const initPageX = initRect.left + window.scrollX;
-  const initPageY = initRect.top + window.scrollY;
+  const scrollY = window.scrollY;
+  const startScroll = Math.max(0, topSlot.offsetTop - 30);
+  const endScroll = Math.max(startScroll + 120, targetSlot.offsetTop - 80);
+
+  const rawT = (scrollY - startScroll) / (endScroll - startScroll);
+  const t = Math.max(0, Math.min(1, rawT));
+
+  if (t <= 0) {
+    shell.style.transform = "";
+    shell.style.width = "";
+    topSlot.style.minHeight = "";
+    if (enrollCard) enrollCard.style.transform = "";
+    return;
+  }
+
+  // Reserve top slot height so layout remains stable
+  const topRect = topSlot.getBoundingClientRect();
+  topSlot.style.minHeight = topRect.height + "px";
+
+  // Smooth cosine acceleration and deceleration
+  const ease = 0.5 - 0.5 * Math.cos(Math.PI * t);
+
+  const topPageX = topRect.left + window.scrollX;
+  const topPageY = topRect.top + window.scrollY;
+
+  const targetRect = targetSlot.getBoundingClientRect();
   const targetPageX = targetRect.left + window.scrollX;
   const targetPageY = targetRect.top + window.scrollY;
 
-  const deltaX = targetPageX - initPageX;
-  const deltaY = targetPageY - initPageY;
-
-  const scrollY = window.scrollY;
-  const scrollStart = Math.max(0, initAnchor.offsetTop - 40);
-  const scrollEnd = Math.max(scrollStart + 80, targetAnchor.offsetTop - 140);
-
-  const rawT = (scrollY - scrollStart) / (scrollEnd - scrollStart);
-  const t = Math.max(0, Math.min(1, rawT));
-
-  const ease = 0.5 - 0.5 * Math.cos(Math.PI * t);
+  const deltaX = targetPageX - topPageX;
+  const deltaY = targetPageY - topPageY;
 
   const curX = deltaX * ease;
   const curY = deltaY * ease;
 
-  card.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`;
+  shell.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`;
 
-  const cameraShell = $("camera-shell");
-  if (cameraShell && cameraShell.classList.contains("is-floating")) {
-    if (!dockPosition) {
-      if (t > 0.08) {
-        cameraShell.style.left = "24px";
-        cameraShell.style.right = "auto";
-        cameraShell.style.transform = "none";
-      } else {
-        cameraShell.style.left = "50%";
-        cameraShell.style.right = "auto";
-        cameraShell.style.transform = "translateX(-50%)";
-      }
-      const streamScale = 1.0 - (0.22 * ease);
-      cameraShell.style.setProperty("--dock-scale", streamScale.toFixed(3));
+  // Scale/width transition: bigger stream size in enrollment slot (up to 500px)
+  const baseWidth = Math.min(topRect.width, 560);
+  const targetWidth = Math.min(targetRect.width || 480, 500);
+  const curWidth = baseWidth + (targetWidth - baseWidth) * ease;
+  shell.style.width = `${curWidth.toFixed(1)}px`;
+
+  // Continuous Proximity Repulsion:
+  // If the stream approaches or overlaps adjacent details during glide, smoothly push them away
+  if (enrollCard) {
+    const shellRect = shell.getBoundingClientRect();
+    const cardRect = enrollCard.getBoundingClientRect();
+    // Calculate horizontal proximity
+    const overlapDistance = shellRect.left - cardRect.right;
+    if (overlapDistance < 32 && t > 0.05 && t < 0.95) {
+      const repelAmount = Math.max(0, Math.min(48, (32 - overlapDistance) * 0.65));
+      enrollCard.style.transform = `translate3d(-${repelAmount.toFixed(1)}px, 0, 0)`;
+    } else {
+      enrollCard.style.transform = "";
     }
   }
 }
 
-window.addEventListener("scroll", () => requestAnimationFrame(updateQualityGlide), {passive: true});
-window.addEventListener("resize", () => requestAnimationFrame(updateQualityGlide));
-requestAnimationFrame(updateQualityGlide);
+window.addEventListener("scroll", () => requestAnimationFrame(updateCameraStreamGlide), {passive: true});
+window.addEventListener("resize", () => requestAnimationFrame(updateCameraStreamGlide));
+requestAnimationFrame(updateCameraStreamGlide);
+
 
 $("quality-check").addEventListener("click", async () => {
   if (busy) return;
