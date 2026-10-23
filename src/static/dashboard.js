@@ -42,6 +42,7 @@ $("feed").addEventListener("load", () => {
     $("feed-empty").hidden = true;
     text("feed-label", "CAM 01 · LIVE");
     adaptFeed();
+    scheduleCameraGlide();
   }
 });
 $("feed").addEventListener("error", () => {
@@ -78,9 +79,10 @@ async function updateStats() {
     const camera = data.camera || {};
     if (typeof data.quality_threshold === "number") {
       const serverVal = Math.round(data.quality_threshold * 100) / 100;
-      lastConfirmedThreshold = serverVal;
+      if (!qualitySaving) lastConfirmedThreshold = serverVal;
+      updateSavedThreshold();
       const knob = $("quality-knob");
-      if (document.activeElement !== knob && Math.abs(currentThreshold - serverVal) > 0.005) {
+      if (!qualitySaving && document.activeElement !== knob && Math.abs(currentThreshold - serverVal) > 0.005) {
         setQualityThreshold(serverVal, false);
       }
     }
@@ -91,7 +93,7 @@ async function updateStats() {
       }
     }
     text("camera-description", (camera.backend === "Picamera2Backend" ? "Pi Camera" : camera.backend === "SyntheticBackend" ? "Simulation · access disabled" : "Camera") + (camera.resolution ? " / " + camera.resolution.join(" × ") : ""));
-    text("focus-state", camera.autofocus ? "Continuous autofocus enabled" : "Autofocus not reported by this camera");
+    text("focus-state", camera.autofocus ? "Automatic focus enabled" : "Autofocus not reported by this camera");
   } catch (error) {
     text("connection", "Station unavailable ○");
     if ($("last-updated").textContent.startsWith("Updated ") && !$("last-updated").textContent.endsWith(" · stale"))
@@ -115,8 +117,21 @@ function setBusy(value, action = "") {
 let currentThreshold = parseFloat(document.body.dataset.qualityThreshold) || 0.70;
 let lastConfirmedThreshold = currentThreshold;
 let lastQualityData = null;
+let qualitySaving = false;
+let savedThreshold = null;
+try {
+  const saved = Number(localStorage.getItem("face_access_quality_threshold"));
+  if (Number.isFinite(saved) && saved >= 0.55 && saved <= 0.70) savedThreshold = saved;
+} catch {}
+function updateSavedThreshold() {
+  const button = $("quality-restore");
+  if (!button) return;
+  button.hidden = savedThreshold === null || Math.abs(savedThreshold - lastConfirmedThreshold) < 0.005;
+  button.textContent = "Apply saved threshold " + (savedThreshold === null ? "" : savedThreshold.toFixed(2));
+}
 
 async function setQualityThreshold(val, syncBackend = true) {
+  if (syncBackend && qualitySaving) return;
   val = Math.max(0.55, Math.min(0.70, Math.round(val * 100) / 100));
   currentThreshold = val;
   const formatted = val.toFixed(2);
@@ -136,6 +151,8 @@ async function setQualityThreshold(val, syncBackend = true) {
 
   if (syncBackend) {
     const prevConfirmed = lastConfirmedThreshold;
+    qualitySaving = true;
+    if (knob) knob.disabled = true;
     try {
       await api("/api/config/quality", {
         method: "POST",
@@ -143,13 +160,22 @@ async function setQualityThreshold(val, syncBackend = true) {
         body: JSON.stringify({threshold: val})
       });
       lastConfirmedThreshold = val;
+      savedThreshold = val;
+      try { localStorage.setItem("face_access_quality_threshold", formatted); } catch {}
+      text("quality-setting-status", "Station threshold updated to " + formatted + ".");
     } catch (err) {
-      text("form-status", "Quality threshold save failed: " + err.message);
+      text("quality-setting-status", "Quality threshold save failed: " + err.message);
       setQualityThreshold(prevConfirmed, false);
+    } finally {
+      qualitySaving = false;
+      if (knob) knob.disabled = false;
+      updateSavedThreshold();
     }
   }
 }
 
+updateSavedThreshold();
+$("quality-restore").addEventListener("click", () => { if (savedThreshold !== null) setQualityThreshold(savedThreshold); });
 const knobEl = $("quality-knob");
 if (knobEl) {
   knobEl.addEventListener("input", e => setQualityThreshold(parseFloat(e.target.value), false));
@@ -195,6 +221,7 @@ async function pollLiveQuality() {
     qualityInFlight = true;
     try {
       const data = await api("/api/quality/live");
+      if (data && data.status === "unavailable") throw new Error(data.message || "Live capture unavailable.");
       if (data && (data.status === "success" || data.status === "no_frame")) {
         if (typeof data.score === "number") {
           smoothedQualityScore = smoothedQualityScore === null
@@ -208,7 +235,12 @@ async function pollLiveQuality() {
           text("quality-time", (data.guidance && data.guidance[0]) || "Position yourself in front of the camera.");
         }
       }
-    } catch {}
+    } catch (error) {
+      smoothedQualityScore = null;
+      renderQuality({score:null, components:{}, guidance:[error.message]}, false);
+      text("quality-state", "CHECK UNAVAILABLE");
+      text("quality-time", "Live readings unavailable; waiting for the camera.");
+    }
     finally {
       qualityInFlight = false;
     }
@@ -217,90 +249,50 @@ async function pollLiveQuality() {
 }
 pollLiveQuality();
 
-// Continuous Camera Stream Gliding & Proximity Repulsion
+// One owner for desktop camera movement; the mobile dock stays independent.
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let glideRepulsion = 0, glideFrame = null;
 function updateCameraStreamGlide() {
-  const shell = $("camera-shell");
-  const topSlot = $("camera-slot");
-  const targetSlot = $("enrollment-camera-slot");
-  const enrollCard = document.querySelector(".enrollment-card");
+  const shell = $("camera-shell"), topSlot = $("camera-slot"), targetSlot = $("enrollment-camera-slot");
+  const card = document.querySelector(".enrollment-card");
   if (!shell || !topSlot || !targetSlot) return;
-
-  if (document.fullscreenElement) {
-    shell.style.transform = "";
-    if (enrollCard) enrollCard.style.transform = "";
-    return;
-  }
-
-  // On narrow screens (single column), keep standard natural flow
-  if (window.innerWidth <= 1000) {
-    shell.style.transform = "";
-    if (enrollCard) enrollCard.style.transform = "";
-    return;
-  }
-
-  const scrollY = window.scrollY;
-  const startScroll = Math.max(0, topSlot.offsetTop - 30);
-  const endScroll = Math.max(startScroll + 120, targetSlot.offsetTop - 80);
-
-  const rawT = (scrollY - startScroll) / (endScroll - startScroll);
-  const t = Math.max(0, Math.min(1, rawT));
-
-  if (t <= 0) {
-    shell.style.transform = "";
+  if (document.fullscreenElement || innerWidth <= 1000 || reducedMotion.matches) {
     shell.style.width = "";
+    if (!shell.classList.contains("is-floating")) shell.style.transform = "";
     topSlot.style.minHeight = "";
-    if (enrollCard) enrollCard.style.transform = "";
+    if (card) card.style.transform = "";
+    glideRepulsion = 0;
     return;
   }
-
-  // Reserve top slot height so layout remains stable
-  const topRect = topSlot.getBoundingClientRect();
-  topSlot.style.minHeight = topRect.height + "px";
-
-  // Smooth cosine acceleration and deceleration
-  const ease = 0.5 - 0.5 * Math.cos(Math.PI * t);
-
-  const topPageX = topRect.left + window.scrollX;
-  const topPageY = topRect.top + window.scrollY;
-
-  const targetRect = targetSlot.getBoundingClientRect();
-  const targetPageX = targetRect.left + window.scrollX;
-  const targetPageY = targetRect.top + window.scrollY;
-
-  const deltaX = targetPageX - topPageX;
-  const deltaY = targetPageY - topPageY;
-
-  const curX = deltaX * ease;
-  const curY = deltaY * ease;
-
-  shell.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`;
-
-  // Scale/width transition: bigger stream size in enrollment slot (up to 500px)
-  const baseWidth = Math.min(topRect.width, 560);
-  const targetWidth = Math.min(targetRect.width || 480, 500);
-  const curWidth = baseWidth + (targetWidth - baseWidth) * ease;
-  shell.style.width = `${curWidth.toFixed(1)}px`;
-
-  // Continuous Proximity Repulsion:
-  // If the stream approaches or overlaps adjacent details during glide, smoothly push them away
-  if (enrollCard) {
-    const shellRect = shell.getBoundingClientRect();
-    const cardRect = enrollCard.getBoundingClientRect();
-    // Calculate horizontal proximity
-    const overlapDistance = shellRect.left - cardRect.right;
-    if (overlapDistance < 32 && t > 0.05 && t < 0.95) {
-      const repelAmount = Math.max(0, Math.min(48, (32 - overlapDistance) * 0.65));
-      enrollCard.style.transform = `translate3d(-${repelAmount.toFixed(1)}px, 0, 0)`;
-    } else {
-      enrollCard.style.transform = "";
-    }
+  const top = topSlot.getBoundingClientRect(), target = targetSlot.getBoundingClientRect();
+  const cardRect = card ? card.getBoundingClientRect() : null;
+  const start = Math.max(0, top.top + scrollY - 100);
+  const end = Math.max(start + 120, target.top + scrollY - 260);
+  const t = Math.max(0, Math.min(1, (scrollY - start) / (end - start)));
+  const ease = (1 - Math.cos(Math.PI * t)) / 2;
+  const x = (target.left - top.left) * ease, y = (target.top - top.top) * ease;
+  const width = top.width + (Math.min(target.width, 500) - top.width) * ease;
+  const left = top.left + x, bottom = top.top + y + shell.offsetHeight;
+  let repel = 0;
+  if (cardRect && bottom > cardRect.top && top.top + y < cardRect.bottom) {
+    const cardRight = cardRect.right + glideRepulsion;
+    repel = Math.min(48, Math.max(0, cardRect.left + glideRepulsion - 16), Math.max(0, cardRight + 24 - left)) * Math.sin(Math.PI * t);
   }
+  topSlot.style.minHeight = t > 0 ? top.height + "px" : "";
+  shell.style.width = t > 0 ? width.toFixed(1) + "px" : "";
+  shell.style.transform = t > 0 ? `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)` : "";
+  if (card) card.style.transform = repel > 0 ? `translate3d(${-repel.toFixed(2)}px, 0, 0)` : "";
+  glideRepulsion = repel;
 }
-
-window.addEventListener("scroll", () => requestAnimationFrame(updateCameraStreamGlide), {passive: true});
-window.addEventListener("resize", () => requestAnimationFrame(updateCameraStreamGlide));
-requestAnimationFrame(updateCameraStreamGlide);
-
+function scheduleCameraGlide() {
+  if (glideFrame !== null) return;
+  glideFrame = requestAnimationFrame(() => { glideFrame = null; updateCameraStreamGlide(); });
+}
+window.addEventListener("scroll", scheduleCameraGlide, {passive:true});
+window.addEventListener("resize", scheduleCameraGlide);
+document.addEventListener("fullscreenchange", scheduleCameraGlide);
+reducedMotion.addEventListener("change", () => { updateCameraDock(); scheduleCameraGlide(); });
+requestAnimationFrame(scheduleCameraGlide);
 
 $("quality-check").addEventListener("click", async () => {
   if (busy) return;
@@ -335,7 +327,8 @@ function historyQuery() {
   $("export").href = "/api/csv?" + query;
   return query;
 }
-let historyVisibleLimit = 10;
+let historyVisibleLimit = 10, historyLoadedLimit = 200;
+let historyCursor = null, historyHasMore = false, historyLoadingOlder = false, historyFilterVersion = 0;
 let allRecentLogs = [];
 let lastHistorySig = "";
 let lastRenderedLimit = 10;
@@ -343,14 +336,11 @@ let lastRenderedLimit = 10;
 function formatLogTime(timestamp) {
   const stamp = new Date(timestamp);
   if (isNaN(stamp.getTime())) return timestamp;
-  const now = new Date();
-  const isToday = stamp.getFullYear() === now.getFullYear() &&
-                  stamp.getMonth() === now.getMonth() &&
-                  stamp.getDate() === now.getDate();
-  const timePart = stamp.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit"});
-  if (isToday) return timePart;
-  const datePart = stamp.toLocaleDateString([], {month: "short", day: "numeric"});
-  return `${datePart}, ${timePart}`;
+  const seconds = Math.max(0, Math.floor((Date.now() - stamp.getTime()) / 1000));
+  if (seconds < 60) return "Just now";
+  if (seconds < 3600) return Math.floor(seconds / 60) + " min ago";
+  if (seconds < 86400) return Math.floor(seconds / 3600) + " hr ago";
+  return Math.floor(seconds / 86400) + " days ago";
 }
 
 function stackRecentLogs(logs, maxCount) {
@@ -362,7 +352,7 @@ function stackRecentLogs(logs, maxCount) {
     const outcome = log.action_outcome || "";
     const last = stacked[stacked.length - 1];
 
-    if (last && last.name === name && last.decision === decision && last.reason === reason && last.action_outcome === outcome) {
+    if (last && last.identity_id === log.identity_id && last.name === name && last.decision === decision && last.reason === reason && last.action_outcome === outcome) {
       last.count += 1;
     } else {
       stacked.push({
@@ -421,6 +411,7 @@ function renderHistory(logs) {
     const badge = document.createElement("span");
     badge.className = "phone-row-badge " + (isAllow ? "allow" : "deny");
     badge.textContent = item.decision;
+    if (item.decision === "OBSERVE") { avatar.className = "phone-row-avatar"; avatar.textContent = "—"; }
 
     title.append(nameEl, badge);
 
@@ -433,6 +424,7 @@ function renderHistory(logs) {
     const meta = document.createElement("div");
     meta.className = "phone-row-time";
     meta.textContent = formatLogTime(item.timestamp);
+    meta.title = new Date(item.timestamp).toLocaleString();
 
     row.append(avatar, main, meta);
     historyList.append(row);
@@ -440,15 +432,16 @@ function renderHistory(logs) {
 
   const remaining = allStacked.length - displayed.length;
   if (showMoreBtn) {
-    if (remaining > 0) {
+    if (remaining > 0 || historyHasMore) {
       showMoreBtn.hidden = false;
-      showMoreBtn.textContent = `Show more decisions (${remaining} remaining)`;
+      showMoreBtn.disabled = historyLoadingOlder;
+      showMoreBtn.textContent = historyLoadingOlder ? "Loading older decisions…" : remaining > 0 ? `Show more decisions (${remaining} loaded)` : "Load older decisions";
     } else {
       showMoreBtn.hidden = true;
     }
   }
 
-  text("history-status", `Showing ${displayed.length} of ${allStacked.length} activity groups. Export CSV includes full audit log.`);
+  text("history-status", `Showing ${displayed.length} of ${allStacked.length} loaded activity groups${historyHasMore ? " (older records available)" : ""}. Export CSV includes full audit log.`);
 }
 
 async function loadHistory() {
@@ -456,18 +449,27 @@ async function loadHistory() {
   try {
     const data = await api("/api/logs?" + query); if (requestId !== historyRequest) return;
     const logs = data.logs || [];
-    allRecentLogs = logs;
+    if (!allRecentLogs.length) {
+      historyCursor = data.next_cursor; historyHasMore = !!data.has_more;
+    }
+    const byId = new Map([...allRecentLogs, ...logs].map(log => [log.id, log]));
+    const merged = Array.from(byId.values()).sort((a,b) => b.timestamp.localeCompare(a.timestamp) || b.id - a.id);
+    allRecentLogs = merged.slice(0, historyLoadedLimit);
+    if (merged.length > historyLoadedLimit) {
+      historyHasMore = true; historyCursor = allRecentLogs[allRecentLogs.length - 1].id;
+    }
 
-    const sig = logs.map(l => `${l.id || l.timestamp}-${l.status}-${l.action_outcome}`).join("|");
+    const sig = allRecentLogs.map(l => `${l.id}-${l.name}-${l.decision}-${l.reason}-${l.action_outcome}`).join("|");
     if (sig === lastHistorySig && historyVisibleLimit === lastRenderedLimit) {
       return;
     }
     lastHistorySig = sig;
     lastRenderedLimit = historyVisibleLimit;
 
-    renderHistory(logs);
+    renderHistory(allRecentLogs);
   } catch (error) {
     if (requestId !== historyRequest) return;
+    lastHistorySig = "";
     emptyHistory("History is unavailable.");
     text("history-status", error.message);
     const showMoreBtn = $("history-show-more");
@@ -485,14 +487,31 @@ function emptyHistory(message) {
 }
 
 function resetHistoryView() {
-  historyVisibleLimit = 10;
+  historyVisibleLimit = 10; historyLoadedLimit = 200;
   lastRenderedLimit = -1;
+  historyFilterVersion++;
+  allRecentLogs = []; historyCursor = null; historyHasMore = false;
   loadHistory();
 }
 
 const showMoreBtn = $("history-show-more");
 if (showMoreBtn) {
-  showMoreBtn.addEventListener("click", () => {
+  showMoreBtn.addEventListener("click", async () => {
+    if (historyLoadingOlder) return;
+    const filterVersion = historyFilterVersion;
+    if (stackRecentLogs(allRecentLogs).length <= historyVisibleLimit && historyHasMore) {
+      historyLoadingOlder = true; renderHistory(allRecentLogs);
+      try {
+        const query = historyQuery(); query.set("limit", "200"); query.set("before_id", historyCursor);
+        const data = await api("/api/logs?" + query);
+        if (filterVersion !== historyFilterVersion) return;
+        const byId = new Map([...allRecentLogs, ...data.logs].map(log => [log.id, log]));
+        historyLoadedLimit += 200;
+        allRecentLogs = Array.from(byId.values()).sort((a,b) => b.timestamp.localeCompare(a.timestamp) || b.id-a.id).slice(0, historyLoadedLimit);
+        historyCursor = data.next_cursor; historyHasMore = !!data.has_more;
+      } catch (error) { text("history-status", error.message); return; }
+      finally { historyLoadingOlder = false; showMoreBtn.disabled = false; }
+    }
     historyVisibleLimit += 10;
     renderHistory(allRecentLogs);
   });
@@ -553,14 +572,17 @@ function setCameraDock(enabled) {
     document.documentElement.classList.toggle("has-camera-dock", enabled);
     if (dockDismissBtn) dockDismissBtn.hidden = !enabled;
     adaptFeed();
+    scheduleCameraGlide();
     if (!enabled) cameraSlot.style.minHeight = "";
     docked = enabled;
+    dragHandle.tabIndex = enabled ? 0 : -1;
     if (!enabled) { cameraShell.style.left = ""; cameraShell.style.top = ""; cameraShell.style.bottom = ""; cameraShell.style.transform = ""; }
     else if (dockPosition) placeDock(dockPosition.x, dockPosition.y);
   }
   if (enabled) document.documentElement.style.setProperty("--camera-dock-space", (cameraShell.getBoundingClientRect().height + 40) + "px");
 }
 function updateCameraDock() {
+  if (innerWidth > 1000 || reducedMotion.matches) { setCameraDock(false); return; }
   const box = cameraSlot.getBoundingClientRect();
   const visible = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0));
   if (visible > box.height * 0.7) {
@@ -590,7 +612,7 @@ document.addEventListener("focusout", () => requestAnimationFrame(updateCameraDo
 
 // Drag the header, keeping playback controls separate.
 const dragHandle = cameraShell.querySelector(".camera-top");
-dragHandle.tabIndex = 0;
+dragHandle.tabIndex = -1;
 dragHandle.setAttribute("aria-label", "Move floating camera: drag or use arrow keys; Home resets position");
 dragHandle.title = "Drag to move / Arrow keys to move / Home to reset";
 function placeDock(x, y) {

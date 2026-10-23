@@ -115,7 +115,7 @@ The web dashboard and live stream require no login credentials. Enrollment is pr
   - Hardware camera drivers (`OpenCVBackend`, `Picamera2Backend`, and `CameraManager.get_resolution()`) detect actual frame dimensions and report real-time resolution in `/api/stats`.
 - **Adjustable Capture Quality Knob (0.55 – 0.70)**:
   - Added an interactive range slider to the Capture Quality panel on the web dashboard allowing instant adjustment between `0.55` (lenient) and `0.70` (strict).
-  - Requires the enrollment password for `POST /api/config/quality` and updates `config.ENROLLMENT_MIN_QUALITY` for the running station. Reloading the page reads the server setting without changing it.
+  - Requires the enrollment password for `POST /api/config/quality` and updates `config.ENROLLMENT_MIN_QUALITY` for the running station. The browser remembers successful threshold changes locally. Reloading reads the server setting; use **Apply saved threshold** with the enrollment password to restore a different preference.
 - **Phone-App Style Decision History with Event Stacking (Last 10)**:
   - Replaced the wide table view with an iOS/Android-inspired activity feed displaying the 10 most recent decisions.
   - Consecutive events from the same identity stack automatically with their occurrence count displayed in brackets, e.g. `Shashank (4)` or `Unknown 1 (3)`.

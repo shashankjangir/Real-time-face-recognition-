@@ -988,3 +988,15 @@ html.has-camera-dock body { padding-bottom: var(--camera-dock-space,320px); }
 .dev-icon {
   vertical-align: middle;
 }
+
+/* Keep motion geometry independent from the quality sidebar and mobile layout. */
+.camera-slot { position: relative; }
+.camera-shell { position: relative; z-index: 2; }
+.enrollment-camera-slot { max-width: 500px; }
+#quality-setting-status { margin-top: 10px; font-size: 12px; color: var(--ink); }
+.phone-row-time { font-variant-numeric: tabular-nums; }
+@media (max-width: 1000px) {
+  .enrollment-camera-slot { display: none; }
+}
+
+.camera-shell:not(.is-floating):not(:fullscreen) .camera-stage:has(img:not([hidden])) { min-height: 0; }

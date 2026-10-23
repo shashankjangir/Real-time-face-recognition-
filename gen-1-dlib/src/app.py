@@ -162,11 +162,18 @@ def api_logs():
     name = request.args.get('name', default=None, type=str)
     hours = request.args.get('hours', default=24, type=int)
 
-    logs = db_manager.get_recent_logs(limit=limit, name=name, hours=hours)
+    before_id = request.args.get('before_id', type=int)
+    if not 1 <= limit <= 200 or not 1 <= hours <= 8760 or ('before_id' in request.args and (before_id is None or before_id <= 0)):
+        return jsonify(status='error', message='Invalid history limit, period, or cursor.'), 400
+    logs = db_manager.get_recent_logs(limit=limit + 1, name=name, hours=hours, before_id=before_id)
+    has_more = len(logs) > limit
+    logs = logs[:limit]
     return jsonify({
         'status': 'success',
         'count': len(logs),
-        'logs': logs
+        'logs': logs,
+        'has_more': has_more,
+        'next_cursor': logs[-1]['id'] if has_more else None
     })
 
 

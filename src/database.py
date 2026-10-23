@@ -346,7 +346,7 @@ class DatabaseManager:
             conn.commit()
             return True
 
-    def get_recent_logs(self, limit: int = 50, name: str = None, hours: int = 24) -> List[Dict]:
+    def get_recent_logs(self, limit: int = 50, name: str = None, hours: int = 24, before_id: int = None) -> List[Dict]:
         """Fetch latest authentication records using indexed timestamp lookup."""
         since_time = (datetime.now() - timedelta(hours=hours)).isoformat()
         query = "SELECT * FROM access_log WHERE timestamp >= ?"
@@ -356,7 +356,10 @@ class DatabaseManager:
             query += " AND name = ?"
             params.append(name)
 
-        query += " ORDER BY timestamp DESC LIMIT ?"
+        if before_id is not None:
+            query += " AND (timestamp, id) < (SELECT timestamp, id FROM access_log WHERE id = ?)"
+            params.append(before_id)
+        query += " ORDER BY timestamp DESC, id DESC LIMIT ?"
         params.append(limit)
 
         with self.pool.get_connection() as conn:

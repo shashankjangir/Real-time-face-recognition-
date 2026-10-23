@@ -15,3 +15,5 @@ Surface mode: Operate. Live camera leads; compact introduction, adjacent instrum
 Controls and data do not wait for animation. Reduced motion disables transitions. CSS and GSAP never share transform ownership on the floating camera. No cloud workflow or framework migration.
 
 The earlier docs/design.md remains historical reference material; this file describes the implemented operator surface.
+
+Desktop camera motion has one owner: a cosine-eased glide from the live slot to the enrollment slot, bounded at 500px, with proximity repulsion. Mobile uses the existing floating view; reduced motion keeps the feed in normal flow. Capture-quality errors sit beside the slider. Local threshold preferences require an explicit authenticated restore. History loads older cursor pages and groups consecutive decisions, with relative timestamps and exact-time tooltips.
