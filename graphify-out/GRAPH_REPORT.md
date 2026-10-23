@@ -1,17 +1,17 @@
 # Graph Report - 3. Real-time-face-recognition-  (2026-10-23)
 
 ## Corpus Check
-- 211 files · ~146,754 words
+- 210 files · ~144,703 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 20 file(s) not represented in the graph (top: (none) 4, .example 3, .csv 3)
 
 ## Summary
-- 3170 nodes · 5801 edges · 244 communities (166 shown, 78 thin omitted)
+- 3162 nodes · 5800 edges · 240 communities (165 shown, 75 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 218 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d012f0c4`
+- Built from commit: `55aba721`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,7 +22,7 @@
 - src/enroll.py
 - RecognitionEngine
 - Implementation Summary: Advanced Real-Time Facial Recognition System
-- route
+- src/app.py
 - DatabaseManager
 - DatabaseManager
 - DatabaseManager
@@ -67,11 +67,11 @@
 - Memory Protocol
 - Analytics
 - src/static/vendor/gsap.min.js
-- src/app.py
+- MetricsCollector
 - Agent: Plan
 - Subagent Patterns
 - Picamera2Backend
-- FaceBox
+- unrotate_box
 - RecognitionEngine
 - DecisionCoordinator
 - Real-Time Facial Recognition & Access System
@@ -81,7 +81,7 @@
 - README.md
 - EnrollmentTests
 - RecognitionEngine
-- ReportGenerator
+- AnnotationOverlay
 - EnrollmentTests
 - GRAVITAS -- Engineering Reliability Runtime
 - DatabasePool
@@ -100,9 +100,9 @@
 - 🚀 QUICK START: Raspberry Pi 5 Deployment
 - PerformanceMonitor
 - ManualCamera
-- PipelineSafetyTests
+- detect_project.py
 - Picamera2Backend
-- OpenCVBackend
+- unrotate_box
 - r
 - r
 - Gravitas -- Delegation Reference
@@ -122,14 +122,13 @@
 - VoiceAnnouncements
 - gen-1-dlib/src/benchmark.py
 - VoiceAnnouncements
-- camera_stream.py
+- OpenCVBackend
 - 📋 COMPLETE COMMAND REFERENCE
 - **🤖 PART 10: AUTO-START ON BOOT (Optional)**
 - **🔄 PART 9: RUN IN BACKGROUND (Production)**
 - PerformanceBenchmark
 - Enrollment and administrator authentication
 - Enrollment and administrator authentication
-- CameraManager
 - Tween
 - t
 - Tween
@@ -138,7 +137,7 @@
 - RuntimeTests
 - Tween
 - DatabasePool
-- reset_db_manager
+- TestCSVReportAndREST
 - RuntimeTests
 - **🛠️ PART 3: INSTALL SYSTEM DEPENDENCIES (10-15 minutes)**
 - **⚙️ PART 8: PERFORMANCE VERIFICATION**
@@ -176,7 +175,6 @@
 - Contributing
 - Architecture and API
 - Parts and requirements
-- TestCSVReportAndREST
 - TestDatabase
 - Parts and requirements
 - TestDatabase
@@ -215,7 +213,6 @@
 - SESSION_FAILURES.md
 - ja
 - ja
-- Required modifications
 - json
 - RASPBERRY_PI_DEPLOYMENT_GUIDE.sh
 - ae
@@ -230,7 +227,6 @@
 - src/static/fonts/README.md
 - 3. Verify Hardware & Camera
 - ae
-- unrotate_box
 - ae
 - v
 - v
@@ -280,31 +276,35 @@
 ## Import Cycles
 - None detected.
 
-## Communities (244 total, 78 thin omitted)
+## Communities (240 total, 75 thin omitted)
 
 ### Community 0 - "gen-1-dlib/src/app.py"
 Cohesion: 0.08
-Nodes (4): private_response(), unavailable(), get_db_manager(), reset_db_manager()
+Nodes (5): reset_db_manager(), private_response(), unavailable(), get_db_manager(), reset_db_manager()
 
 ### Community 1 - "numpy"
-Cohesion: 0.12
-Nodes (4): shutdown_pipeline(), reset_db_manager(), compute_cosine_distance(), distribution()
+Cohesion: 0.08
+Nodes (8): main(), main(), main(), SyntheticBackend, reset_db_manager(), AnnotationOverlay, FaceBox, RecognizedFace
 
 ### Community 3 - "src/enroll.py"
-Cohesion: 0.07
-Nodes (13): main(), main(), main(), latency_stats(), measure_pi(), predict_frame(), SyntheticBackend, get_db_manager() (+5 more)
+Cohesion: 0.08
+Nodes (12): AppleFeaturesTest, AppleFeaturesTest, get_db_manager(), create_robust_template(), enroll_from_image_file(), enroll_from_multiple_images(), enroll_identity(), enroll_synthetic_identities() (+4 more)
 
 ### Community 4 - "RecognitionEngine"
-Cohesion: 0.08
-Nodes (14): get_db_manager(), assess_face_quality(), create_robust_template(), enroll_from_image_file(), enroll_from_multiple_images(), enroll_identity(), enroll_synthetic_identities(), face_quality_report() (+6 more)
+Cohesion: 0.06
+Nodes (14): create_robust_template(), enroll_from_image_file(), enroll_from_multiple_images(), enroll_identity(), enroll_synthetic_identities(), AnnotationOverlay, batch_cosine_distances(), calculate_ear() (+6 more)
 
 ### Community 5 - "Implementation Summary: Advanced Real-Time Facial Recognition System"
 Cohesion: 0.05
 Nodes (38): 10. **setup.py** (400+ Lines), 1. **config.py** (100+ Parameters), 1. Setup (Automated), 2. **database.py** (2,500+ Lines), 2. Enroll Faces, 3. **recognition_engine.py** (1,000+ Lines), 3. Start Recognition System, 4. Access Dashboard (+30 more)
 
-### Community 6 - "route"
-Cohesion: 0.17
-Nodes (6): api_identities(), api_quality_config(), api_stats(), health(), index(), video_stream()
+### Community 6 - "src/app.py"
+Cohesion: 0.07
+Nodes (17): api_csv(), api_enroll(), api_identities(), api_live_recognition(), api_logs(), api_quality_config(), api_stats(), create_app() (+9 more)
+
+### Community 7 - "DatabaseManager"
+Cohesion: 0.05
+Nodes (3): DatabaseManager, distribution(), RecognitionRuntime
 
 ### Community 10 - "📚 DEPLOYMENT GUIDES - INDEX & QUICK REFERENCE"
 Cohesion: 0.06
@@ -320,7 +320,7 @@ Nodes (34): Agent Prompt Guide, Black Pill Button, Border Radius, Cinematic Imag
 
 ### Community 13 - "BenchmarkTests"
 Cohesion: 0.06
-Nodes (10): BenchmarkTests, BenchmarkTests, build_gallery(), evaluate_images(), load_manifest(), main(), read_image(), require_real_model() (+2 more)
+Nodes (9): BenchmarkTests, BenchmarkTests, build_gallery(), load_manifest(), main(), measure_pi(), require_real_model(), summarize_predictions() (+1 more)
 
 ### Community 14 - "FigureAI — Style Reference"
 Cohesion: 0.06
@@ -330,12 +330,8 @@ Nodes (34): Agent Prompt Guide, Black Pill Button, Border Radius, Cinematic Imag
 Cohesion: 0.06
 Nodes (33): 1. Parallel by Default, 2. Tool Selection Hierarchy, 3. Never Retry Verbatim, 4. Confirm Before Destructive Actions, After implementation, After write, Always capture output, Always read before write (+25 more)
 
-### Community 16 - "RecognitionEngine"
-Cohesion: 0.13
-Nodes (8): create_robust_template(), enroll_from_image_file(), enroll_from_multiple_images(), enroll_identity(), enroll_synthetic_identities(), compute_cosine_distance(), normalize_vector(), RecognitionEngine
-
 ### Community 17 - "initialize_pipeline"
-Cohesion: 0.07
+Cohesion: 0.08
 Nodes (17): api_csv(), api_enroll(), api_identities(), api_live_recognition(), api_logs(), api_quality_config(), api_stats(), create_app() (+9 more)
 
 ### Community 18 - "gen-1-dlib/tests/test_speech.js"
@@ -348,15 +344,15 @@ Nodes (17): check_camera(), check_dependencies(), check_python_version(), Colors
 
 ### Community 20 - "gen-1-dlib/src/static/dashboard.js"
 Cohesion: 0.09
-Nodes (38): actionLabels, adaptFeed(), allRecentLogs, announcements, api(), cameraObserver, cameraShell, cameraSlot (+30 more)
+Nodes (39): actionLabels, adaptFeed(), allRecentLogs, announcements, api(), cameraObserver, cameraShell, cameraSlot (+31 more)
 
 ### Community 21 - "gen-2-scrfd/src/static/dashboard.js"
 Cohesion: 0.09
-Nodes (38): actionLabels, adaptFeed(), allRecentLogs, announcements, api(), cameraObserver, cameraShell, cameraSlot (+30 more)
+Nodes (39): actionLabels, adaptFeed(), allRecentLogs, announcements, api(), cameraObserver, cameraShell, cameraSlot (+31 more)
 
 ### Community 22 - "src/static/dashboard.js"
 Cohesion: 0.09
-Nodes (38): actionLabels, adaptFeed(), allRecentLogs, announcements, api(), cameraObserver, cameraShell, cameraSlot (+30 more)
+Nodes (39): actionLabels, adaptFeed(), allRecentLogs, announcements, api(), cameraObserver, cameraShell, cameraSlot (+31 more)
 
 ### Community 23 - "Verification Chains (by Language)"
 Cohesion: 0.07
@@ -371,8 +367,8 @@ Cohesion: 0.08
 Nodes (25): Context Budgeting, Context Hygiene Rules, Context Management, Context Structure (by Task Size), Cross-session continuity, Don't pass:, Large task (full codebase, 200K–1M tokens), Long Session Management (+17 more)
 
 ### Community 27 - "normalize_vector"
-Cohesion: 0.07
-Nodes (10): TestRecognitionMetrics, AppleFeaturesTest, TestRecognitionMetrics, AppleFeaturesTest, create_robust_template(), enroll_identity(), calculate_ear(), normalize_vector() (+2 more)
+Cohesion: 0.10
+Nodes (6): TestRecognitionMetrics, TestRecognitionMetrics, shutdown_pipeline(), batch_cosine_distances(), compute_cosine_distance(), TestRecognitionMetrics
 
 ### Community 28 - "The 20 Anti-Patterns"
 Cohesion: 0.08
@@ -386,9 +382,13 @@ Nodes (23): After Tool Calls, Always open with:, Autonomous Operation Voice, Cor
 Cohesion: 0.08
 Nodes (23): 10. `AnnotationOverlay.render` reads `self.fps` outside lock, 11. `_fps_tracker` list used across threads without a lock, 12. `face_quality_report` box coordinates assume `face_recognition` order, 13. Dual import pattern everywhere, 14. `LOG_CONFIDENCE_THRESHOLD` is unused, 15. `ENCODINGS_FILE` / pickle sync is a legacy liability, 16. No `__init__.py` in `tests/`, 17. `test_speech.js` exists but no JS test runner is configured (+15 more)
 
+### Community 31 - "RecognitionRuntime"
+Cohesion: 0.10
+Nodes (13): build_gallery(), device_model(), evaluate_images(), latency_stats(), main(), measure_pi(), predict_frame(), read_image() (+5 more)
+
 ### Community 32 - "DecisionCoordinator"
 Cohesion: 0.05
-Nodes (8): TestFrameQueue, TestFrameQueue, PipelineSafetyTests, DecisionCoordinator, FrameQueue, RecognitionWorker, TestFrameQueue, PipelineSafetyTests
+Nodes (8): TestFrameQueue, PipelineSafetyTests, TestFrameQueue, PipelineSafetyTests, DecisionCoordinator, FrameQueue, RecognitionWorker, TestFrameQueue
 
 ### Community 33 - "Raspberry Pi 5 Deployment & Terminal Guide"
 Cohesion: 0.09
@@ -411,11 +411,11 @@ Cohesion: 0.10
 Nodes (19): Adversarial Critique Protocol, Auth Middleware Order, Common Failure Patterns (Historical), Critique Output Format, Critique Thresholds, DB Migration Without Transaction, Import Style Breaks Tree Shaking, Test Assertion Mismatch (+11 more)
 
 ### Community 39 - "DecisionCoordinator"
-Cohesion: 0.16
+Cohesion: 0.14
 Nodes (3): DecisionCoordinator, FrameQueue, RecognitionWorker
 
 ### Community 40 - "initialize_pipeline"
-Cohesion: 0.09
+Cohesion: 0.07
 Nodes (17): api_csv(), api_enroll(), api_identities(), api_live_recognition(), api_logs(), api_quality_config(), api_stats(), create_app() (+9 more)
 
 ### Community 41 - "gen-1-dlib/src/static/vendor/gsap.min.js"
@@ -435,8 +435,8 @@ Cohesion: 0.06
 Nodes (5): CameraBackend, CameraManager, OpenCVBackend, Picamera2Backend, SyntheticBackend
 
 ### Community 46 - "RecognitionEngine"
-Cohesion: 0.09
-Nodes (7): batch_cosine_distance(), cosine_distance(), euclidean_distance(), Face, RecognitionEngine, RecognitionResult, TestCSVReportAndREST
+Cohesion: 0.10
+Nodes (5): euclidean_distance(), Face, RecognitionEngine, RecognitionResult, TestCSVReportAndREST
 
 ### Community 47 - "Model-Native Optimization Notes (Gemini tuned)"
 Cohesion: 0.12
@@ -446,17 +446,9 @@ Nodes (16): 10. Integration with GRAVITAS Tiers, 11. Portability Notes (tuned on
 Cohesion: 0.12
 Nodes (16): Before saving, Cross-Session Continuity Pattern, Don't save, `feedback` — What the user has corrected, Layer 1 — Session Memory (in-session, ephemeral), Layer 2 — Project Memory (cross-session, persistent), Memory Index — GRAVITAS_MEMORY.md, Memory Lifecycle (+8 more)
 
-### Community 49 - "Analytics"
-Cohesion: 0.08
-Nodes (4): get_db_manager(), HealthMonitor, Analytics, PerformanceAnalyzer
-
 ### Community 50 - "src/static/vendor/gsap.min.js"
 Cohesion: 0.06
 Nodes (17): fe(), Kd(), Ld(), ma(), Md(), na(), Nd(), oa() (+9 more)
-
-### Community 51 - "src/app.py"
-Cohesion: 0.20
-Nodes (5): api_enroll(), enrollment_quality(), private_response(), require_administrator(), unavailable()
 
 ### Community 52 - "Agent: Plan"
 Cohesion: 0.12
@@ -466,33 +458,37 @@ Nodes (15): Agent: Plan, Calibrated Reasoning Phase, Complexity Heuristics, Plan
 Cohesion: 0.12
 Nodes (15): Agent Communication Rules, Anti-Patterns, Core Decision: Spawn or Act Directly?, Dispatching an Agent, Example Dispatch: Explore, Example Dispatch: General, Example Dispatch: Verify, Pattern 1: Sequential Pipeline (+7 more)
 
-### Community 55 - "FaceBox"
-Cohesion: 0.05
-Nodes (8): AuditRegressions, AuditRegressions, face_quality_report(), AnnotationOverlay, FaceBox, RecognizedFace, unrotate_box(), AuditRegressions
+### Community 55 - "unrotate_box"
+Cohesion: 0.10
+Nodes (4): AuditRegressions, AuditRegressions, unrotate_box(), AuditRegressions
 
 ### Community 56 - "RecognitionEngine"
-Cohesion: 0.08
-Nodes (6): AnnotationOverlay, batch_cosine_distances(), calculate_ear(), FaceBox, RecognizedFace, unrotate_box()
+Cohesion: 0.09
+Nodes (14): get_db_manager(), assess_face_quality(), create_robust_template(), enroll_from_image_file(), enroll_from_multiple_images(), enroll_identity(), enroll_synthetic_identities(), face_quality_report() (+6 more)
 
 ### Community 57 - "DecisionCoordinator"
-Cohesion: 0.09
-Nodes (5): DecisionCoordinator, FrameQueue, RecognitionWorker, distribution(), RecognitionRuntime
+Cohesion: 0.10
+Nodes (4): DecisionCoordinator, FrameQueue, RecognitionWorker, RecognitionRuntime
 
 ### Community 58 - "Real-Time Facial Recognition & Access System"
 Cohesion: 0.17
 Nodes (12): Documentation, Enrollment, Features, License, Physical Hardware Testing & Observed Edge Cases (Pi 5 + Camera Module 3), Project Generations, Project status, Quick start (+4 more)
 
 ### Community 59 - "initialize_pipeline"
-Cohesion: 0.20
-Nodes (5): api_csv(), api_live_recognition(), api_logs(), create_app(), initialize_pipeline()
+Cohesion: 0.05
+Nodes (4): CameraBackend, CameraManager, OpenCVBackend, PipelineSafetyTests
+
+### Community 60 - "MetricsCollector"
+Cohesion: 0.11
+Nodes (4): get_db_manager(), DashboardMetrics, HealthMonitor, PerformanceAnalyzer
 
 ### Community 62 - "README.md"
 Cohesion: 0.30
 Nodes (3): Earlier implementations, Hardware guide, Update Log
 
 ### Community 64 - "RecognitionEngine"
-Cohesion: 0.09
-Nodes (5): IdentityMatchingTests, IdentityMatchingTests, batch_cosine_distances(), RecognitionEngine, IdentityMatchingTests
+Cohesion: 0.08
+Nodes (4): IdentityMatchingTests, IdentityMatchingTests, RecognitionEngine, IdentityMatchingTests
 
 ### Community 67 - "GRAVITAS -- Engineering Reliability Runtime"
 Cohesion: 0.14
@@ -530,9 +526,9 @@ Nodes (10): log_fail(), log_info(), log_pass(), log_warn(), verify.sh script, de
 Cohesion: 0.18
 Nodes (10): Advanced Facial Recognition System - 10 Step Deployment, **📊 PERFORMANCE TARGETS**, 📋 **QUICK REFERENCE CARD**, 🚀 QUICK START: Raspberry Pi 5 Deployment, **📞 SUPPORT REFERENCE**, **System Requirements**, **🐛 TROUBLESHOOTING**, **⚡ ULTRA-FAST DEPLOYMENT (For Experts)** (+2 more)
 
-### Community 84 - "PipelineSafetyTests"
-Cohesion: 0.05
-Nodes (4): PipelineSafetyTests, CameraBackend, CameraManager, OpenCVBackend
+### Community 84 - "detect_project.py"
+Cohesion: 0.39
+Nodes (4): count_source_files(), detect_language(), main(), suggest_budget()
 
 ### Community 88 - "r"
 Cohesion: 0.15
@@ -587,8 +583,8 @@ Cohesion: 0.18
 Nodes (11): [2026-10-21 18:30 IST] — Generation 2 Release (SCRFD ONNX Integration), [2026-10-21 19:25 IST] — Raspberry Pi Terminal Deployment & Runner Setup, [2026-10-22 17:15 IST] — Physical Hardware Benchmarking & Field Fixes (Pi 5 + Camera Module 3), [2026-10-23 17:30 IST] — Dashboard Modernization, Hardware Adaptation & UI Polish, Architecture, Dashboard authentication, Documentation Index (Generation 2), Generation 2: Real-Time Face Recognition (InsightFace SCRFD + ONNX Runtime) (+3 more)
 
 ### Community 105 - "gen-1-dlib/src/benchmark.py"
-Cohesion: 0.11
-Nodes (27): build_gallery(), device_model(), evaluate_images(), latency_stats(), load_manifest(), main(), measure_pi(), predict_frame() (+19 more)
+Cohesion: 0.10
+Nodes (23): batch_cosine_distance(), cosine_distance(), load_manifest(), build_gallery(), device_model(), evaluate_images(), latency_stats(), load_manifest() (+15 more)
 
 ### Community 109 - "📋 COMPLETE COMMAND REFERENCE"
 Cohesion: 0.29
@@ -675,7 +671,7 @@ Cohesion: 0.25
 Nodes (8): [2026-10-21 18:30 IST] — Generation 1 Baseline Preservation, [2026-10-21 19:25 IST] — Raspberry Pi Terminal Deployment & Runner Setup, [2026-10-23 17:30 IST] — Dashboard Modernization, Hardware Adaptation & UI Polish, Dashboard authentication, Generation 1: Real-Time Face Recognition (dlib HOG + ResNet-128D), Overview, Quick Start (Generation 1), Update Log
 
 ### Community 136 - "gen-1-dlib/app.py"
-Cohesion: 0.29
+Cohesion: 0.40
 Nodes (4): CAMERA_BACKEND, CAMERA_INDEX, PYTHONIOENCODING, run.sh script
 
 ### Community 137 - "ja"
@@ -691,7 +687,7 @@ Cohesion: 0.33
 Nodes (6): 1. Finish deployment-specific integration, 2. Establish accuracy with independent captures, 3. Measure and optimize on the Pi 5, 4. Verify reporting and assemble evidence, Implementation status and validation roadmap, Implemented software
 
 ### Community 140 - "gen-2-scrfd/app.py"
-Cohesion: 0.29
+Cohesion: 0.40
 Nodes (4): CAMERA_BACKEND, CAMERA_INDEX, PYTHONIOENCODING, run.sh script
 
 ### Community 143 - "**🔍 PART 12: DEBUGGING & LOGS**"
@@ -886,13 +882,9 @@ Nodes (9): Aa(), Animation(), Ba(), ja(), la(), Sa(), Ta(), ub() (+1 more)
 Cohesion: 0.28
 Nodes (9): Aa(), Animation(), Ba(), ja(), la(), Sa(), Ta(), ub() (+1 more)
 
-### Community 205 - "Required modifications"
-Cohesion: 0.18
-Nodes (10): 1. Protect enrollment settings — High priority, 2. Make capture readiness server-authoritative — High priority, 3. Preserve audit history meaning — High priority, 4. Restore readable, restrained controls — High priority, 5. Keep the camera dock out of the enrollment workflow — Medium priority, 6. Improve history announcements and heading structure — Medium/Low priority, 7. Align documentation and evidence — Medium priority, Required modifications (+2 more)
-
 ### Community 207 - "json"
-Cohesion: 0.15
-Nodes (10): count_source_files(), detect_language(), main(), suggest_budget(), imported_plugin_names(), main(), sha256(), main() (+2 more)
+Cohesion: 0.13
+Nodes (8): imported_plugin_names(), main(), sha256(), main(), detect_language(), run_verification(), index(), stream()
 
 ### Community 209 - "ae"
 Cohesion: 0.36
@@ -948,23 +940,23 @@ Nodes (4): Answer, Outcome, Q: analyze what modifications can be done, Source No
 
 ## Knowledge Gaps
 - **6 isolated node(s):** `CAMERA_BACKEND`, `CAMERA_INDEX`, `PYTHONIOENCODING`, `CAMERA_BACKEND`, `CAMERA_INDEX` (+1 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1612 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **78 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1602 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **75 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `DatabaseManager` connect `DatabaseManager` to `gen-1-dlib/src/app.py`, `src/enroll.py`, `RecognitionEngine`, `BenchmarkTests`, `Analytics`, `Analytics`, `RecognitionEngine`, `initialize_pipeline`, `setup.py`, `normalize_vector`, `TestDatabase`, `DecisionCoordinator`, `TestDatabase`, `TestDatabase`, `DecisionCoordinator`, `initialize_pipeline`, `Analytics`, `FaceBox`, `DecisionCoordinator`, `RuntimeTests`, `FrameDecisionTests`, `FrameDecisionTests`, `RecognitionEngine`, `ReportGenerator`, `FrameDecisionTests`, `Analytics`, `PipelineSafetyTests`, `RuntimeTests`, `RuntimeTests`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `DatabaseManager` connect `DatabaseManager` to `gen-1-dlib/src/app.py`, `src/enroll.py`, `RecognitionEngine`, `src/app.py`, `BenchmarkTests`, `Analytics`, `Analytics`, `initialize_pipeline`, `setup.py`, `TestDatabase`, `DecisionCoordinator`, `TestDatabase`, `TestDatabase`, `DecisionCoordinator`, `initialize_pipeline`, `unrotate_box`, `RecognitionEngine`, `DecisionCoordinator`, `initialize_pipeline`, `MetricsCollector`, `RuntimeTests`, `FrameDecisionTests`, `FrameDecisionTests`, `RecognitionEngine`, `FrameDecisionTests`, `Analytics`, `RuntimeTests`, `RuntimeTests`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Are the 48 inferred relationships involving `DatabaseManager` (e.g. with `enroll_from_image_file()` and `enroll_from_multiple_images()`) actually correct?**
   _`DatabaseManager` has 48 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CAMERA_BACKEND`, `CAMERA_INDEX`, `PYTHONIOENCODING` to the rest of the system?**
   _6 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `gen-1-dlib/src/app.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.07990867579908675 - nodes in this community are weakly interconnected._
-- **Why does `DatabaseManager` connect `DatabaseManager` to `RecognitionEngine`, `numpy`, `gen-1-dlib/src/app.py`, `src/enroll.py`, `TestDatabase`, `DecisionCoordinator`, `TestDatabase`, `gen-1-dlib/src/benchmark.py`, `.get_statistics`, `DatabasePool`, `src/app.py`, `PipelineSafetyTests`, `FaceBox`, `normalize_vector`, `TestDatabase`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Should `numpy` be split into smaller, more focused modules?**
-  _Cohesion score 0.12331969608416131 - nodes in this community are weakly interconnected._
-- **Why does `DatabaseManager` connect `DatabaseManager` to `gen-1-dlib/src/app.py`, `gen-1-dlib/src/benchmark.py`?**
+  _Cohesion score 0.08234126984126984 - nodes in this community are weakly interconnected._
+- **Why does `DatabaseManager` connect `DatabaseManager` to `gen-1-dlib/src/app.py`, `initialize_pipeline`, `RecognitionEngine`, `RecognitionRuntime`?**
   _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **Should `numpy` be split into smaller, more focused modules?**
+  _Cohesion score 0.07523510971786834 - nodes in this community are weakly interconnected._
+- **Why does `RecognitionEngine` connect `RecognitionEngine` to `gen-1-dlib/src/app.py`, `FrameQueue`, `src/enroll.py`, `RecognitionEngine`, `src/app.py`, `BenchmarkTests`, `initialize_pipeline`, `setup.py`, `DecisionCoordinator`, `initialize_pipeline`, `unrotate_box`, `RecognitionEngine`, `initialize_pipeline`, `RuntimeTests`, `EnrollmentTests`, `RecognitionEngine`, `EnrollmentTests`, `SCRFDDetector`, `EnrollmentTests`, `RuntimeTests`, `TestCSVReportAndREST`, `RuntimeTests`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._

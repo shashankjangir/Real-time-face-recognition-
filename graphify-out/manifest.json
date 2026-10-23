@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/src/static/dashboard.js": {
-    "mtime": 1792761810.362712,
-    "seen": 1792761920.7359762,
-    "ast_hash": "30023a68c7db2d7cdc82d987a2d16e66",
+    "mtime": 1792762582.7031305,
+    "seen": 1792762617.1326993,
+    "ast_hash": "a49d10b4f13b563836d891eaad6c9106",
     "semantic_hash": ""
   },
   "gen-1-dlib/src/static/speech.js": {
@@ -396,9 +396,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/static/dashboard.js": {
-    "mtime": 1792761810.364219,
-    "seen": 1792761920.7359762,
-    "ast_hash": "30023a68c7db2d7cdc82d987a2d16e66",
+    "mtime": 1792762582.7061706,
+    "seen": 1792762617.1326993,
+    "ast_hash": "a49d10b4f13b563836d891eaad6c9106",
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/static/speech.js": {
@@ -564,9 +564,9 @@
     "semantic_hash": ""
   },
   "src/static/dashboard.js": {
-    "mtime": 1792761810.3617127,
-    "seen": 1792761920.7359762,
-    "ast_hash": "30023a68c7db2d7cdc82d987a2d16e66",
+    "mtime": 1792762582.7705946,
+    "seen": 1792762617.1326993,
+    "ast_hash": "a49d10b4f13b563836d891eaad6c9106",
     "semantic_hash": ""
   },
   "src/static/speech.js": {
@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1792761901.207194,
-    "seen": 1792761920.7359762,
-    "ast_hash": "2aeb5c1664116839ddc0f9ea4c5fe47a",
+    "mtime": 1792762582.6922314,
+    "seen": 1792762617.1326993,
+    "ast_hash": "44fd535996218efede56a96db17b30d1",
     "semantic_hash": ""
   },
   "archive/README.md": {
@@ -924,9 +924,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/README.md": {
-    "mtime": 1792761901.207194,
-    "seen": 1792761920.7359762,
-    "ast_hash": "34b4f83d683b78d62b63990869c22f9f",
+    "mtime": 1792762582.698547,
+    "seen": 1792762617.1326993,
+    "ast_hash": "f3a43b1d5b3e5c31cd15268a96f63864",
     "semantic_hash": ""
   },
   "gen-1-dlib/docs/architecture.md": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/src/templates/dashboard.html": {
-    "mtime": 1792761762.0624456,
-    "seen": 1792761920.7359762,
-    "ast_hash": "3a933922764939665e57ab4e14a0b3bc",
+    "mtime": 1792762582.7051513,
+    "seen": 1792762617.1326993,
+    "ast_hash": "f498a593785c933bd5098e416810d1ce",
     "semantic_hash": ""
   },
   "gen-2-scrfd/CONTRIBUTING.md": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/README.md": {
-    "mtime": 1792761901.207194,
-    "seen": 1792761920.7359762,
-    "ast_hash": "8b3b110895d6c23787e87f768675e714",
+    "mtime": 1792762582.7061706,
+    "seen": 1792762617.1326993,
+    "ast_hash": "e6be71a2e57fc680402604e0455331ca",
     "semantic_hash": ""
   },
   "gen-2-scrfd/docs/architecture.md": {
@@ -1140,9 +1140,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/templates/dashboard.html": {
-    "mtime": 1792761762.0634463,
-    "seen": 1792761920.7359762,
-    "ast_hash": "3a933922764939665e57ab4e14a0b3bc",
+    "mtime": 1792762582.7117076,
+    "seen": 1792762617.1326993,
+    "ast_hash": "f498a593785c933bd5098e416810d1ce",
     "semantic_hash": ""
   },
   "guide_raspberry.md": {
@@ -1218,9 +1218,9 @@
     "semantic_hash": ""
   },
   "src/templates/dashboard.html": {
-    "mtime": 1792761762.0624456,
-    "seen": 1792761920.7359762,
-    "ast_hash": "3a933922764939665e57ab4e14a0b3bc",
+    "mtime": 1792762582.7705946,
+    "seen": 1792762617.1326993,
+    "ast_hash": "f498a593785c933bd5098e416810d1ce",
     "semantic_hash": ""
   },
   "recognize_stream.py": {
@@ -1341,12 +1341,6 @@
     "mtime": 1792748023.9816892,
     "seen": 1792753821.5648909,
     "ast_hash": "0ef0b7757786231c1a6818ac9371038b",
-    "semantic_hash": ""
-  },
-  "MODIFICATIONS.md": {
-    "mtime": 1792758288.687812,
-    "seen": 1792759601.6898804,
-    "ast_hash": "2c2beb8d1b36e0e5b49690066adf4dd2",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20261023_121800_4a3c7761_analyze_what_modifications_can_be_done.md": {
