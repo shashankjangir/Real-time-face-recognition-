@@ -50,6 +50,18 @@ class FrameDecisionTests(unittest.TestCase):
         self.action.assert_not_called()
         self.assertEqual(self.db.get_recent_logs(), [])
 
+    def test_multiple_unknown_faces_are_serialized_left_to_right(self):
+        from src.recognition_engine import AnnotationOverlay
+        u1 = RecognizedFace(FaceBox(0, 40, 40, 10), np.ones(128), 'Unknown', 0, 1, False, None)
+        u2 = RecognizedFace(FaceBox(0, 90, 40, 60), np.ones(128), 'Unknown', 0, 1, False, None)
+        overlay = AnnotationOverlay()
+        overlay.update([u1, u2])
+        with patch('src.recognition_engine.cv2.rectangle'), patch('src.recognition_engine.cv2.putText') as text:
+            overlay.render(np.zeros((100, 100, 3), dtype=np.uint8))
+        labels = [c.args[1] for c in text.call_args_list if c.args and 'Unknown' in str(c.args[1])]
+        self.assertIn('Unknown 1', labels[0])
+        self.assertIn('Unknown 2', labels[1])
+
     def test_multiple_face_overlay_colors_and_labels(self):
         from src.recognition_engine import AnnotationOverlay
         from src import config

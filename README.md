@@ -244,7 +244,8 @@ Run speech logic checks with `node tests/test_speech.js` in addition to the Pyth
   - Syncs via `POST /api/config/quality`, dynamically updates `config.ENROLLMENT_MIN_QUALITY`, and persists to `localStorage`.
 - **Phone-App Style Decision History with Event Stacking (Last 10)**:
   - Replaced the wide table view with an iOS/Android-inspired activity feed displaying the 10 most recent decisions.
-  - Consecutive events from the same identity stack automatically with their occurrence count displayed in brackets, e.g. `Shashank (4)` or `Unknown (2)`.
+  - Consecutive events from the same identity stack automatically with their occurrence count displayed in brackets, e.g. `Shashank (4)` or `Unknown 1 (3)`.
+  - Unknown serialization: Frames first evaluate whether a single unknown person or multiple unknown people are present. A single person is shown as `Unknown`, while multiple unknown individuals are serialized as `Unknown 1`, `Unknown 2`, etc., across both live camera video overlays and stacked decision history.
 - **Cosmic Energy Flow Button Animations**:
   - Styled all interactive keys and buttons (`.pill`, `.camera-control`, `.ghost-btn`, `.dialog-close`, etc.) with continuous cosmic energy flowing gradients, radiant glowing auras, and subtle particle shimmer matching each button's unique color theme.
 

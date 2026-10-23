@@ -177,6 +177,15 @@ class AnnotationOverlay:
         vis = frame.copy()
         faces = self.get_active_faces()
 
+        # Decide if there is a single unknown person or multiple unknown people
+        unknown_faces = [f for f in faces if not (f.is_match and f.identity_id is not None)]
+        has_multiple_unknowns = len(unknown_faces) > 1
+        unknown_names = {}
+        if has_multiple_unknowns:
+            sorted_unknowns = sorted(unknown_faces, key=lambda f: f.box.left if hasattr(f, 'box') and hasattr(f.box, 'left') else 0)
+            for idx, uf in enumerate(sorted_unknowns, start=1):
+                unknown_names[id(uf)] = f"Unknown {idx}"
+
         for face in faces:
             display_only = face.reason == 'multiple_faces_display_only'
             known = face.is_match and face.identity_id is not None
@@ -197,7 +206,15 @@ class AnnotationOverlay:
                 action_label = "multiple faces"
             elif face.reason == 'attention_required':
                 action_label = "attention required"
-            label = (f"{face.name}: RECOGNISED" if known else "Unknown") if display_only else f"{face.name}: {face.decision.upper()} / {action_label}"
+
+            if known:
+                display_name = face.name
+            elif has_multiple_unknowns:
+                display_name = unknown_names.get(id(face), "Unknown")
+            else:
+                display_name = "Unknown"
+
+            label = (f"{display_name}: RECOGNISED" if known else display_name) if display_only else f"{display_name}: {face.decision.upper()} / {action_label}"
             font = cv2.FONT_HERSHEY_SIMPLEX
             scale = config.TEXT_FONT_SCALE
             thickness = config.TEXT_THICKNESS
@@ -435,6 +452,15 @@ class RecognitionEngine:
                 is_attentive=is_attentive,
                 ear=ear_val
             ))
+
+        # Decide if frame has single or multiple unknown people and series them if multiple
+        unknown_faces = [f for f in results if not f.is_match or f.identity_id is None]
+        if len(unknown_faces) > 1:
+            sorted_u = sorted(unknown_faces, key=lambda f: f.box.left if hasattr(f, 'box') and hasattr(f.box, 'left') else 0)
+            for idx, uf in enumerate(sorted_u, start=1):
+                uf.name = f"Unknown {idx}"
+        elif len(unknown_faces) == 1:
+            unknown_faces[0].name = "Unknown"
 
         total_latency = (time.monotonic() - t_start) * 1000.0
         return results

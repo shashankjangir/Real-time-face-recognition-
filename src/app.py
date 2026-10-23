@@ -112,8 +112,16 @@ def api_live_recognition():
     """Only fresh overlay results; never replay historical audit entries as speech."""
     initialize_pipeline()
     faces = recognition_engine.overlay.get_active_faces()
+    unknown_faces = [f for f in faces if not (f.is_match and f.identity_id is not None)]
+    has_mult_unknowns = len(unknown_faces) > 1
+    unknown_names = {}
+    if has_mult_unknowns:
+        sorted_u = sorted(unknown_faces, key=lambda f: getattr(getattr(f, 'box', None), 'left', 0))
+        for idx, uf in enumerate(sorted_u, start=1):
+            unknown_names[id(uf)] = f"Unknown {idx}"
+
     response = jsonify(status='success', faces=[dict(
-        name=f.name if f.is_match and f.identity_id is not None else 'Unknown',
+        name=f.name if f.is_match and f.identity_id is not None else (unknown_names.get(id(f), 'Unknown') if has_mult_unknowns else 'Unknown'),
         identity_id=f.identity_id if f.is_match else None,
         recognized=bool(f.is_match and f.identity_id is not None)) for f in faces])
     response.headers['Cache-Control'] = 'no-store'

@@ -199,7 +199,7 @@ function stackRecentLogs(logs, maxCount = 10) {
   const stacked = [];
   for (const log of logs) {
     const decision = (log.decision || (log.status === "verified" ? "allow" : "deny")).toUpperCase();
-    const name = log.name || "Unknown";
+    let name = (log.name || "Unknown").trim();
     const last = stacked[stacked.length - 1];
 
     if (last && last.name === name && last.decision === decision) {
@@ -214,6 +214,22 @@ function stackRecentLogs(logs, maxCount = 10) {
       if (stacked.length >= maxCount) break;
     }
   }
+
+  // Count unknown groups in decision history
+  const unknownGroups = stacked.filter(item => /^Unknown(\s*\d+)?$/i.test(item.name.trim()));
+  if (unknownGroups.length > 1) {
+    // If multiple unknown entries exist in history, series them as Unknown 1, Unknown 2, etc.
+    let uIndex = 1;
+    for (const item of stacked) {
+      if (/^Unknown(\s*\d+)?$/i.test(item.name.trim())) {
+        item.name = `Unknown ${uIndex++}`;
+      }
+    }
+  } else if (unknownGroups.length === 1) {
+    // Single unknown entry is kept as "Unknown"
+    unknownGroups[0].name = "Unknown";
+  }
+
   return stacked;
 }
 
