@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f5f5f7">
+<meta name="theme-color" content="#10191f">
 <title>Face / Access — Live Station</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
 <script defer src="{{ url_for('static', filename='speech.js') }}"></script>
+<script defer src="{{ url_for('static', filename='vendor/gsap.min.js') }}"></script>
 <script defer src="{{ url_for('static', filename='dashboard.js') }}"></script>
 </head>
 <body data-quality-threshold="{{ quality_threshold }}">
@@ -15,7 +16,7 @@
 <header class="masthead">
   <div class="masthead-inner">
     <a class="wordmark" href="#" aria-label="Face Access home">
-      <span class="apple-glyph" aria-hidden="true">􀌬</span>
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 3H3v8m18-8h8v8M3 21v8h8m18-8v8h-8"/><path d="M11 13h1m8 0h1m-10 7q5 4 10 0"/></svg>
       <span>Face / Access</span>
     </a>
     <nav aria-label="Main">
@@ -28,28 +29,15 @@
 </header>
 
 <main>
-  <section class="hero" aria-labelledby="page-title">
-    <div class="hero-content">
-      <p class="eyebrow">STATION 01 · REAL-TIME ACCESS</p>
-      <h1 id="page-title">A familiar face.</h1>
-      <p class="tagline">Recognition at the point of entry.</p>
-      <p class="hero-copy muted">Edge metric learning on Raspberry Pi 5. One camera, 128D embeddings, and instant verification.</p>
-      <div class="hero-actions">
-        <a class="pill" href="#enrollment">Enroll an identity</a>
-        <a class="pill outline" href="#live">View live camera</a>
-      </div>
-    </div>
-  </section>
-
   <div class="system-message" id="system-message" role="status" hidden></div>
 
-  <section id="live" class="section-block" aria-labelledby="live-title">
+  <section id="live" class="section-block live-section" aria-labelledby="live-title">
     <div class="section-header">
       <div>
-        <p class="section-label">OBSERVATION</p>
-        <h2 id="live-title">Live Observation</h2>
+        <h1 id="live-title">Recognition.<br><span>In view.</span></h1>
+        <p class="station-intro">Your camera, identities and access decisions. All on this station.</p>
       </div>
-      <span class="header-badge" id="camera-description">Waiting for camera</span>
+      <div class="live-heading-aside"><span class="header-badge" id="camera-description">Waiting for camera</span><a class="pill" href="#enrollment">Enroll an identity</a></div>
     </div>
 
     <div class="observation">
@@ -62,7 +50,7 @@
           <div class="camera-stage">
             <img id="feed" alt="Live access-camera feed" hidden>
             <div class="feed-empty" id="feed-empty">
-              <span class="focus-mark" aria-hidden="true">[ + ]</span>
+              <svg class="focus-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5H5v10m28-10h10v10M5 33v10h10m28-10v10H33M24 17v14m-7-7h14"/></svg>
               <h3 id="feed-empty-title">Connecting to your camera</h3>
               <p id="feed-empty-text">The live feed will appear here when the station is available.</p>
               <button class="pill outline" id="retry" type="button">Reconnect</button>
@@ -73,7 +61,7 @@
             <div class="camera-controls">
               <button class="camera-control" id="speech-toggle" type="button" aria-pressed="false">Enable voice</button>
               <button class="camera-control" id="pause" type="button" aria-pressed="false">Pause view</button>
-              <button class="camera-control" id="fullscreen" type="button">Full screen ↗</button>
+              <button class="camera-control" id="fullscreen" type="button">Full screen</button>
             </div>
           </div>
         </div>
@@ -81,7 +69,7 @@
 
       <aside class="specifications" aria-label="Station measurements">
         <div class="spec-card">
-          <div class="spec-heading">STATION READOUT</div>
+          <h2 class="spec-heading">Station readout</h2>
           <div class="spec-list">
             <div class="spec">
               <div class="spec-meta">
@@ -115,6 +103,7 @@
           <div class="spec-foot">
             <span id="speech-status" role="status">Voice is off. Enable it to hear recognition and enrollment.</span>
             <span id="focus-state">Focus mode unavailable</span>
+            <span id="last-updated">Waiting for first measurement.</span>
             <span id="metric-note">Measurements appear when the station connects.</span>
           </div>
         </div>
@@ -135,7 +124,6 @@
   <section id="enrollment" class="section-block" aria-labelledby="enrollment-title">
     <div class="section-header">
       <div>
-        <p class="section-label">IDENTITY CREATION</p>
         <h2 id="enrollment-title">Enrollment</h2>
       </div>
       <span class="header-badge">One person. One clear capture.</span>
@@ -143,7 +131,8 @@
 
     <div class="enrollment-grid">
       <div class="enrollment-card">
-        <h3>Make an introduction.</h3>
+        <h3>A clear capture. A known identity.</h3>
+        <ol class="enrollment-steps" aria-label="Enrollment steps"><li>Position</li><li>Check quality</li><li>Enroll</li></ol>
         <p class="muted">Face the camera, stay near the centre and hold still. Check your capture quality before adding an identity.</p>
         <form id="enroll-form">
           <div class="form-field">
@@ -202,7 +191,7 @@
         <p class="field-note" id="quality-time">No capture checked yet.</p>
         <details class="capture-help">
           <summary>Having trouble with focus?</summary>
-          <p>Use steady, diffuse light in front of you. A direct phone flash can overexpose your face. Keep the lens clean, avoid being very close, and allow continuous autofocus to settle.</p>
+          <p>Use steady, diffuse light in front of you. A direct phone flash can overexpose your face. Keep the lens clean, avoid being very close, and allow the camera to finish focusing.</p>
           <p>A score below the threshold may be caused by blur, lighting or a small face crop. Use the individual readings above to decide what to change.</p>
         </details>
       </div>
@@ -212,10 +201,9 @@
   <section id="history" class="section-block" aria-labelledby="history-title">
     <div class="section-header">
       <div>
-        <p class="section-label">AUDIT TRAIL</p>
         <h2 id="history-title">Decision History</h2>
       </div>
-      <button class="pill outline" id="refresh-history" type="button">Refresh ↻</button>
+      <button class="pill outline" id="refresh-history" type="button">Refresh</button>
     </div>
 
     <div class="history-toolbar">
@@ -233,12 +221,12 @@
           </select>
         </div>
       </div>
-      <a class="pill outline" id="export" href="/api/csv?hours=24">Export period CSV ↗</a>
+      <a class="pill outline" id="export" href="/api/csv?hours=24">Export period CSV</a>
     </div>
 
     <p id="history-status" class="field-note" role="status">Loading recent decisions.</p>
 
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="history-title">
       <table>
         <thead>
           <tr>
@@ -265,12 +253,12 @@
     </div>
     <div class="footer-col footer-right">
       <span>Raspberry Pi 5 · Camera Module 3 · SQLite WAL</span>
-      <a class="ghost-link" href="#">Back to top ↑</a>
+      <a class="ghost-link" href="#">Back to top</a>
     </div>
   </div>
 </footer>
 
-<dialog id="identity-dialog" aria-labelledby="identity-title">
+<dialog class="t-modal" id="identity-dialog" aria-labelledby="identity-title">
   <div class="dialog-heading">
     <h2 id="identity-title">Enrolled Identities</h2>
     <button class="dialog-close" id="identities-close" type="button" aria-label="Close dialog">✕</button>
@@ -281,7 +269,7 @@
     <input id="identity-search" type="search" placeholder="Search names">
   </div>
   <p id="identity-status" role="status">Loading…</p>
-  <ul id="identity-list"></ul>
+  <ul id="identity-list" tabindex="0" aria-label="Enrolled identities"></ul>
 </dialog>
 
 </body>

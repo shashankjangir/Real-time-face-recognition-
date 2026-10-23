@@ -51,6 +51,7 @@ $("fullscreen").addEventListener("click", async () => {
 async function updateStats() {
   try {
     const data = await api("/api/stats");
+    text("last-updated", "Updated " + new Date().toLocaleTimeString());
     text("connection", "Station online ●"); $("system-message").hidden = true;
     text("identities-open", data.identities_enrolled);
     const metrics = data.telemetry || {};
@@ -65,6 +66,8 @@ async function updateStats() {
     text("focus-state", camera.autofocus ? "Continuous autofocus enabled" : "Autofocus not reported by this camera");
   } catch (error) {
     text("connection", "Station unavailable ○");
+    if ($("last-updated").textContent.startsWith("Updated ") && !$("last-updated").textContent.endsWith(" · stale"))
+      text("last-updated", $("last-updated").textContent + " · stale");
     text("system-message", "Station unavailable. " + error.message); $("system-message").hidden = false;
     ["capture-fps", "recognition-fps", "latency", "jpeg-fps", "drops", "identities-open"].forEach(id => text(id, "—"));
     text("metric-note", "Measurements unavailable until the station reconnects.");
@@ -78,6 +81,7 @@ function credentials() {
 }
 function setBusy(value, action = "") {
   busy = value; $("enroll-button").disabled = value; $("quality-check").disabled = value;
+  $("enroll-form").setAttribute("aria-busy", String(value));
   if (value) text("form-status", action);
 }
 function renderQuality(data) {
@@ -154,12 +158,34 @@ function renderIdentities() {
   $("identity-list").replaceChildren(...matches.map(identity => { const li = document.createElement("li"), name = document.createElement("span"), note = document.createElement("small"); name.textContent = identity.name; note.textContent = "Quality " + number(identity.quality_score, 2); li.append(name, note); return li; }));
   text("identity-status", matches.length + (matches.length === 1 ? " identity" : " identities"));
 }
+const identityDialog = $("identity-dialog");
+let dialogCloseTimer;
+function closeIdentities() {
+  if (!identityDialog.open || identityDialog.classList.contains("is-closing")) return;
+  identityDialog.classList.remove("is-open");
+  identityDialog.classList.add("is-closing");
+  const closeMs = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 :
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--modal-close-dur")) || 150;
+  dialogCloseTimer = setTimeout(() => identityDialog.close(), closeMs);
+}
+identityDialog.addEventListener("close", () => {
+  clearTimeout(dialogCloseTimer);
+  identityDialog.classList.remove("is-open", "is-closing");
+  $("identities-open").focus({preventScroll:true});
+});
+identityDialog.addEventListener("cancel", event => { event.preventDefault(); closeIdentities(); });
 $("identities-open").addEventListener("click", async () => {
-  $("identity-dialog").showModal(); $("identity-search").value = ""; identities = []; $("identity-list").replaceChildren(); text("identity-status", "Loading…");
+  clearTimeout(dialogCloseTimer);
+  identityDialog.classList.remove("is-closing");
+  identityDialog.showModal();
+  void identityDialog.offsetWidth;
+  identityDialog.classList.add("is-open");
+  $("identity-search").focus();
+  $("identity-search").value = ""; identities = []; $("identity-list").replaceChildren(); text("identity-status", "Loading…");
   try { const data = await api("/api/identities"); identities = data.identities; renderIdentities(); }
   catch (error) { text("identity-status", error.message); }
 });
-$("identities-close").addEventListener("click", () => $("identity-dialog").close());
+$("identities-close").addEventListener("click", closeIdentities);
 $("identity-search").addEventListener("input", renderIdentities);
 function clock() { text("clock", new Date().toLocaleTimeString([], {hour12:false})); }
 async function poll() { if (!document.hidden) { await updateStats(); await loadHistory(); } setTimeout(poll, 4000); }
@@ -184,7 +210,8 @@ function setCameraDock(enabled) {
 function updateCameraDock() {
   const box = cameraSlot.getBoundingClientRect();
   const visible = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0));
-  setCameraDock(visible < Math.min(box.height * .5, innerHeight * .4));
+  const editingOnMobile = innerWidth <= 700 && document.activeElement.matches("input, select, textarea");
+  setCameraDock(!editingOnMobile && visible < Math.min(box.height * .5, innerHeight * .4));
 }
 const cameraObserver = new IntersectionObserver(updateCameraDock, {threshold:[0,.25,.5,.75,1]});
 cameraObserver.observe(cameraSlot);
@@ -192,11 +219,13 @@ window.addEventListener("resize", updateCameraDock);
 document.addEventListener("fullscreenchange", updateCameraDock);
 // Keep focused form controls above the dock when navigating with the keyboard.
 document.addEventListener("focusin", event => {
+  updateCameraDock();
   if (docked && !cameraShell.contains(event.target) && !event.target.closest("dialog")) {
     const box = event.target.getBoundingClientRect();
     if (box.bottom > cameraShell.getBoundingClientRect().top) event.target.scrollIntoView({block:"center", behavior:"instant"});
   }
 });
+document.addEventListener("focusout", () => requestAnimationFrame(updateCameraDock));
 
 // Drag the header, keeping playback controls separate.
 const dragHandle = cameraShell.querySelector(".camera-top");
@@ -243,3 +272,13 @@ async function pollVoice() {
   setTimeout(pollVoice, 700);
 }
 pollVoice();
+
+// Decorative entrance only; station controls never wait for animation.
+if (window.gsap) {
+  const motion = gsap.matchMedia();
+  motion.add("(prefers-reduced-motion: no-preference)", () => {
+    gsap.from(".brand-mark, .focus-mark", {y: 8, duration: .65, ease: "power3.out", clearProps: "transform"});
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) motion.revert(); });
+  window.addEventListener("pagehide", () => motion.revert());
+}
