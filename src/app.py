@@ -243,26 +243,34 @@ def api_live_quality():
     from .enroll import face_quality_report
     if isinstance(camera_manager.backend, SyntheticBackend):
         return jsonify(status='unavailable', message='Quality checks require a real camera.'), 200
-    frame = camera_manager.get_frame()
-    if frame is None:
-        return jsonify(status='no_frame', ready=False, score=None, threshold=config.ENROLLMENT_MIN_QUALITY, components={}), 200
-    try:
-        detections = recognition_engine.detector.detect_faces(frame)
-    except Exception:
-        return jsonify(status='error', ready=False, score=None, threshold=config.ENROLLMENT_MIN_QUALITY, components={}), 200
-
-    if len(detections) != 1:
-        msg = 'No face in view. Position yourself in front of the camera.' if not detections else 'Multiple faces in view. Position one person for enrollment.'
+    faces = recognition_engine.overlay.get_active_faces()
+    if not faces:
         return jsonify(
             status='success',
-            face_count=len(detections),
+            face_count=0,
             ready=False,
             score=None,
             threshold=config.ENROLLMENT_MIN_QUALITY,
             components={},
-            guidance=[msg]
+            guidance=['No face in view. Position yourself in front of the camera.']
         ), 200
-    box, _ = detections[0]
+
+    if len(faces) > 1:
+        return jsonify(
+            status='success',
+            face_count=len(faces),
+            ready=False,
+            score=None,
+            threshold=config.ENROLLMENT_MIN_QUALITY,
+            components={},
+            guidance=['Multiple faces in view. Position one person for enrollment.']
+        ), 200
+
+    frame = camera_manager.get_frame()
+    if frame is None:
+        return jsonify(status='no_frame', ready=False, score=None, threshold=config.ENROLLMENT_MIN_QUALITY, components={}), 200
+
+    box = faces[0].box
     rep = face_quality_report(frame, box)
     return jsonify(status='success', face_count=1, **rep), 200
 

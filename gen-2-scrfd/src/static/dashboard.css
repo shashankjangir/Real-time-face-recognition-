@@ -146,9 +146,6 @@ input::placeholder { color: var(--muted); }
 }
 
 /* Continuous Stream Gliding & Repulsion */
-.camera-shell {
-  will-change: transform, width;
-}
 
 .camera-shell.is-docked-enrollment {
   position: fixed;

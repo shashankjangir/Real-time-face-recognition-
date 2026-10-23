@@ -135,8 +135,16 @@ class RecognitionRuntime:
                     continue
                 previous, jpeg = self.jpeg_id, self.jpeg
             # Slow viewers skip cached frames; they never encode or enqueue work.
-            yield (b'--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ' +
-                   str(len(jpeg)).encode() + b'\r\n\r\n' + jpeg + b'\r\n')
+
+            try:
+
+                yield (b'--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ' +
+
+                       str(len(jpeg)).encode() + b'\r\n\r\n' + jpeg + b'\r\n')
+
+            except (GeneratorExit, BrokenPipeError, ConnectionResetError):
+
+                return
 
     def discard_stale(self, delivered):
         stale = time.monotonic() - delivered > config.MAX_FRAME_AGE_SECONDS

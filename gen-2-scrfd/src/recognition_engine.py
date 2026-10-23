@@ -553,10 +553,8 @@ class RecognitionWorker(threading.Thread):
                 self.last_error = None
             except Exception as e:
                 self.last_error = str(e)
-                if self.runtime:
-                    self.runtime.fail(str(e))
-                    self.running = False
-                    continue
+                logger.warning("RecognitionWorker-%s frame %s processing warning: %s", self.worker_id, frame_id, e)
+                continue
                 self.engine.overlay.update([])
                 logger.exception("Worker %s failed on frame %s", self.worker_id, frame_id)
                 try:

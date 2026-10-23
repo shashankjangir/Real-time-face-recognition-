@@ -35,8 +35,8 @@ KNOWN_FACES_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================================
 CAMERA_BACKEND = os.getenv("CAMERA_BACKEND", "auto")  # "auto", "picamera2", "opencv", "synthetic"
 CAMERA_INDEX = int(os.getenv("CAMERA_INDEX", "0"))     # USB camera index if using opencv
-CAMERA_WIDTH = 640
-CAMERA_HEIGHT = 480
+CAMERA_WIDTH = int(os.getenv("CAMERA_WIDTH", "1280" if os.name == "nt" else "640"))
+CAMERA_HEIGHT = int(os.getenv("CAMERA_HEIGHT", "720" if os.name == "nt" else "480"))
 CAMERA_FPS = 30
 FRAME_SKIP = 3  # Submit every Nth captured frame
 FRAME_QUEUE_SIZE = 2  # Bound queued work; discard oldest under load
@@ -94,7 +94,7 @@ DEBUG_MODE = False
 THREADED_MODE = True
 
 # MJPEG streaming
-MJPEG_QUALITY = 82  # JPEG quality (1-100)
+MJPEG_QUALITY = int(os.getenv("MJPEG_QUALITY", "88"))  # JPEG quality (1-100)
 MJPEG_FRAME_RATE = 25  # Target stream display FPS
 
 # ============================================================================

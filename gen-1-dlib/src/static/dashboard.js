@@ -197,8 +197,10 @@ function renderQuality(data, isManual = true) {
 }
 
 let qualityPollTimer = null;
+let qualityInFlight = false;
 async function pollLiveQuality() {
-  if (!paused && !document.hidden) {
+  if (!paused && !document.hidden && !qualityInFlight) {
+    qualityInFlight = true;
     try {
       const data = await api("/api/quality/live");
       if (data && (data.status === "success" || data.status === "no_frame")) {
@@ -215,8 +217,11 @@ async function pollLiveQuality() {
         }
       }
     } catch {}
+    finally {
+      qualityInFlight = false;
+    }
   }
-  qualityPollTimer = setTimeout(pollLiveQuality, 450);
+  qualityPollTimer = setTimeout(pollLiveQuality, 500);
 }
 pollLiveQuality();
 

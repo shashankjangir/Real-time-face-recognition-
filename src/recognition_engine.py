@@ -323,14 +323,40 @@ class RecognitionEngine:
         center = (w / 2.0, h / 2.0)
 
         # 1. Primary check: try last detected tilt angle (default 0 deg)
+
+
         active_angle = getattr(self, 'last_tilt_angle', 0)
+
+
         active_rgb = rgb
+
+
         if active_angle != 0:
+
+
             M = cv2.getRotationMatrix2D(center, active_angle, 1.0)
+
+
             active_rgb = cv2.warpAffine(rgb, M, (w, h))
 
+
+
+        scale = 2 if w >= 800 else 1
+
+
+        detect_rgb = active_rgb[::scale, ::scale] if scale > 1 else active_rgb
+
+
         try:
-            locs = face_recognition.face_locations(active_rgb, model=config.FACE_DETECTION_MODEL)
+
+
+            locs = face_recognition.face_locations(detect_rgb, model=config.FACE_DETECTION_MODEL)
+
+
+            if scale > 1 and locs:
+
+
+                locs = [(t * scale, r * scale, b * scale, l * scale) for (t, r, b, l) in locs]
         except Exception as exc:
             raise RuntimeError("Face detection failed") from exc
 
@@ -545,10 +571,8 @@ class RecognitionWorker(threading.Thread):
                 self.last_error = None
             except Exception as e:
                 self.last_error = str(e)
-                if self.runtime:
-                    self.runtime.fail(str(e))
-                    self.running = False
-                    continue
+                logger.warning("RecognitionWorker-%s frame %s processing warning: %s", self.worker_id, frame_id, e)
+                continue
                 self.engine.overlay.update([])
                 logger.exception("Worker %s failed on frame %s", self.worker_id, frame_id)
                 try:

@@ -108,6 +108,8 @@ class OpenCVBackend(CameraBackend):
         self.cap = cv2.VideoCapture(self.index)
         if not self.cap.isOpened():
             raise RuntimeError(f"Cannot open camera index {self.index}")
+        if self.width > 640:
+            self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
@@ -247,12 +249,18 @@ class CameraManager:
 
     def _capture_loop(self):
         last_t = time.time()
+        consecutive_misses = 0
         while self.running:
             time.sleep(0.001)  # prevent 100% CPU spin when backend.read() returns instantly
             try:
                 success, frame = self.backend.read()
                 if not success or frame is None:
-                    raise RuntimeError("Camera returned no frame")
+                    consecutive_misses += 1
+                    if consecutive_misses >= 10:
+                        raise RuntimeError("Camera returned no frame")
+                    time.sleep(0.01)
+                    continue
+                consecutive_misses = 0
             except Exception as exc:
                 with self.frame_lock:
                     self.last_error = str(exc)
