@@ -106,3 +106,21 @@ Physical testing on Raspberry Pi 5 hardware (Debian Trixie, libcamera 0.7.2, Son
 Set `ADMIN_ENROLLMENT_TOKEN` to a strong generated token before launching.
 The browser login uses username `admin` and that token as its password.
 No default token is supplied. Use HTTPS for network access. See [authentication](docs/enrollment.md).
+
+### [2026-10-23 17:30 IST] — Dashboard Modernization, Hardware Adaptation & UI Polish
+
+- **Open Access & Password-Protected Enrollment**:
+  - Removed HTTP Basic authentication and token restrictions from public read routes (`/`, `/stream.mjpg`, `/api/stats`, `/api/logs`, `/api/identities`, `/health`). Dashboard and live camera streams are open and accessible immediately without browser login popups.
+  - Replaced administrative token gating with an enrollment password (`ENROLLMENT_PASSWORD`, defaulting to `123456789`), required only when adding new identities or checking face quality.
+- **Dynamic Camera Feed Adaptation (Main View & Floating Dock)**:
+  - Both the primary camera view and the floating/docked mini-widget dynamically adapt their aspect ratio to the camera input stream (4:3, 16:9, etc.) via `--feed-aspect`, removing letterboxing, black bars, and squished feeds.
+  - Hardware camera drivers (`OpenCVBackend`, `Picamera2Backend`, and `CameraManager.get_resolution()`) detect actual frame dimensions and report real-time resolution in `/api/stats`.
+- **Adjustable Capture Quality Knob (0.55 – 0.70)**:
+  - Added an interactive range slider to the Capture Quality panel on the web dashboard allowing instant adjustment between `0.55` (lenient) and `0.70` (strict).
+  - Syncs via `POST /api/config/quality`, dynamically updates `config.ENROLLMENT_MIN_QUALITY`, and persists to `localStorage`.
+- **Phone-App Style Decision History with Event Stacking (Last 10)**:
+  - Replaced the wide table view with an iOS/Android-inspired activity feed displaying the 10 most recent decisions.
+  - Consecutive events from the same identity stack automatically with their occurrence count displayed in brackets, e.g. `Shashank (4)` or `Unknown (2)`.
+- **Cosmic Energy Flow Button Animations**:
+  - Styled all interactive keys and buttons (`.pill`, `.camera-control`, `.ghost-btn`, `.dialog-close`, etc.) with continuous cosmic energy flowing gradients, radiant glowing auras, and subtle particle shimmer matching each button's unique color theme.
+

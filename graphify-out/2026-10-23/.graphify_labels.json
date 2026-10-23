@@ -1,5 +1,4 @@
 {
-  "3": "normalize_vector",
   "5": "Implementation Summary: Advanced Real-Time Facial Recognition System",
   "6": "cv2",
   "8": "DatabaseManager",
@@ -17,7 +16,6 @@
   "23": "Verification Chains (by Language)",
   "24": "🎯 RASPBERRY PI DEPLOYMENT - COMPLETE SUMMARY",
   "25": "Context Management",
-  "27": "src/recognition_engine.py",
   "28": "The 20 Anti-Patterns",
   "29": "Persona Protocol",
   "30": "🟡 Medium — Robustness",

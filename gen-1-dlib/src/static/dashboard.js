@@ -31,8 +31,8 @@ function adaptFeed() {
   const feed = $("feed");
   if (feed && feed.naturalWidth > 0 && feed.naturalHeight > 0) {
     const ratio = `${feed.naturalWidth} / ${feed.naturalHeight}`;
-    const stage = $("camera-stage");
-    if (stage) stage.style.aspectRatio = ratio;
+    const stages = document.querySelectorAll(".camera-stage");
+    stages.forEach(st => st.style.aspectRatio = ratio);
     document.documentElement.style.setProperty("--feed-aspect", ratio);
   }
 }
@@ -195,26 +195,102 @@ function historyQuery() {
   $("export").href = "/api/csv?" + query;
   return query;
 }
+function stackRecentLogs(logs, maxCount = 10) {
+  const stacked = [];
+  for (const log of logs) {
+    const decision = (log.decision || (log.status === "verified" ? "allow" : "deny")).toUpperCase();
+    const name = log.name || "Unknown";
+    const last = stacked[stacked.length - 1];
+
+    if (last && last.name === name && last.decision === decision) {
+      last.count += 1;
+    } else {
+      stacked.push({
+        ...log,
+        name,
+        decision,
+        count: 1
+      });
+      if (stacked.length >= maxCount) break;
+    }
+  }
+  return stacked;
+}
+
 async function loadHistory() {
   const requestId = ++historyRequest, query = historyQuery(); query.set("limit", "100");
   try {
     const data = await api("/api/logs?" + query); if (requestId !== historyRequest) return;
-    $("history-body").replaceChildren();
-    for (const log of data.logs) {
-      const row = document.createElement("tr");
-      const stamp = new Date(log.timestamp);
-      const values = [isNaN(stamp) ? log.timestamp : stamp.toLocaleString(), log.name,
-        (log.decision || (log.status === "verified" ? "allow" : "deny")).toUpperCase(), human(log.reason), human(log.action_outcome)];
-      values.forEach((value, index) => { const td = document.createElement("td");
-        if (index === 2) { const badge = document.createElement("span"); badge.className = "decision" + (value === "ALLOW" ? " allow" : ""); badge.textContent = value; td.append(badge); }
-        else td.textContent = value; row.append(td); });
-      $("history-body").append(row);
+    const historyList = $("history-list");
+    if (!historyList) return;
+    historyList.replaceChildren();
+
+    if (!data.logs || !data.logs.length) {
+      emptyHistory("No decisions recorded in this period.");
+      text("history-status", "No decisions found for the selected filter.");
+      return;
     }
-    if (!data.logs.length) emptyHistory("No decisions in this period.");
-    text("history-status", "Showing " + data.logs.length + " most recent decisions (up to 100). CSV includes the full selected period.");
-  } catch (error) { if (requestId !== historyRequest) return; emptyHistory("History is unavailable."); text("history-status", error.message); }
+
+    const stacked = stackRecentLogs(data.logs, 10);
+
+    for (const item of stacked) {
+      const row = document.createElement("div");
+      row.className = "phone-history-row";
+
+      const avatar = document.createElement("div");
+      const isAllow = item.decision === "ALLOW";
+      avatar.className = "phone-row-avatar " + (isAllow ? "allow" : "deny");
+      avatar.innerHTML = isAllow
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+      const main = document.createElement("div");
+      main.className = "phone-row-main";
+
+      const title = document.createElement("div");
+      title.className = "phone-row-title";
+
+      const nameEl = document.createElement("span");
+      nameEl.className = "phone-row-name";
+      nameEl.textContent = item.count > 1 ? `${item.name} (${item.count})` : item.name;
+
+      const badge = document.createElement("span");
+      badge.className = "phone-row-badge " + (isAllow ? "allow" : "deny");
+      badge.textContent = item.decision;
+
+      title.append(nameEl, badge);
+
+      const sub = document.createElement("div");
+      sub.className = "phone-row-sub";
+      sub.textContent = `${human(item.reason)} · ${human(item.action_outcome)}`;
+
+      main.append(title, sub);
+
+      const meta = document.createElement("div");
+      meta.className = "phone-row-time";
+      const stamp = new Date(item.timestamp);
+      meta.textContent = isNaN(stamp) ? item.timestamp : stamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+
+      row.append(avatar, main, meta);
+      historyList.append(row);
+    }
+
+    text("history-status", `Showing ${stacked.length} most recent activity groups (up to 10 stacked). Export CSV includes full log.`);
+  } catch (error) {
+    if (requestId !== historyRequest) return;
+    emptyHistory("History is unavailable.");
+    text("history-status", error.message);
+  }
 }
-function emptyHistory(message) { const row = document.createElement("tr"), cell = document.createElement("td"); cell.colSpan = 5; cell.className = "table-empty"; cell.textContent = message; row.append(cell); $("history-body").replaceChildren(row); }
+
+function emptyHistory(message) {
+  const historyList = $("history-list");
+  if (!historyList) return;
+  const empty = document.createElement("div");
+  empty.className = "phone-history-empty";
+  empty.textContent = message;
+  historyList.replaceChildren(empty);
+}
 $("refresh-history").addEventListener("click", loadHistory);
 $("history-hours").addEventListener("change", loadHistory);
 let searchTimer; $("history-name").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadHistory, 350); });
@@ -266,6 +342,7 @@ function setCameraDock(enabled) {
     if (enabled) cameraSlot.style.minHeight = cameraSlot.getBoundingClientRect().height + "px";
     cameraShell.classList.toggle("is-floating", enabled);
     document.documentElement.classList.toggle("has-camera-dock", enabled);
+    adaptFeed();
     if (!enabled) cameraSlot.style.minHeight = "";
     docked = enabled;
     if (!enabled) { cameraShell.style.left = ""; cameraShell.style.top = ""; cameraShell.style.bottom = ""; cameraShell.style.transform = ""; }
