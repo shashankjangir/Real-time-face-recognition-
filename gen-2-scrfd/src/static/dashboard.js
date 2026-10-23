@@ -214,6 +214,7 @@ let historyVisibleLimit = 10;
 let allRecentLogs = [];
 let lastHistorySig = "";
 let lastRenderedLimit = 10;
+let lastSpokenLogId = null;
 
 function formatLogTime(timestamp) {
   const stamp = new Date(timestamp);
@@ -276,12 +277,15 @@ function renderHistory(logs) {
     const row = document.createElement("div");
     row.className = "phone-history-row";
 
-    const avatar = document.createElement("div");
+    const isUnknown = /^Unknown(\s*\d+)?$/i.test(item.name.trim());
+    const isRecognized = (item.status === "verified" || item.decision === "ALLOW") && !isUnknown;
     const isAllow = item.decision === "ALLOW";
-    avatar.className = "phone-row-avatar " + (isAllow ? "allow" : "deny");
-    avatar.innerHTML = isAllow
+
+    const avatar = document.createElement("div");
+    avatar.className = "phone-row-avatar " + (isRecognized ? "allow" : "deny");
+    avatar.innerHTML = isRecognized
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
 
     const main = document.createElement("div");
     main.className = "phone-row-main";
@@ -293,15 +297,24 @@ function renderHistory(logs) {
     nameEl.className = "phone-row-name";
     nameEl.textContent = item.count > 1 ? `${item.name} (${item.count} events)` : item.name;
 
+    const badges = document.createElement("div");
+    badges.className = "phone-row-badges";
+
     const badge = document.createElement("span");
     badge.className = "phone-row-badge " + (isAllow ? "allow" : "deny");
     badge.textContent = item.decision;
 
-    title.append(nameEl, badge);
+    const statusPill = document.createElement("span");
+    statusPill.className = "recognition-pill " + (isRecognized ? "recognized" : "unrecognized");
+    statusPill.textContent = isRecognized ? "RECOGNISED" : "NOT RECOGNISED";
+
+    badges.append(badge, statusPill);
+    title.append(nameEl, badges);
 
     const sub = document.createElement("div");
     sub.className = "phone-row-sub";
-    sub.textContent = `${human(item.reason)} · ${human(item.action_outcome)}`;
+    const recLabel = isRecognized ? "Recognised identity" : `Not recognised (${item.name})`;
+    sub.textContent = `${recLabel} · ${human(item.reason)} · ${human(item.action_outcome)}`;
 
     main.append(title, sub);
 
@@ -341,6 +354,21 @@ async function loadHistory() {
     lastRenderedLimit = historyVisibleLimit;
 
     renderHistory(logs);
+
+    // Announce new access decisions when voice is enabled (completely independent of camera stream)
+    if (announcements.enabled && logs.length > 0) {
+      const topLog = logs[0];
+      if (topLog && topLog.id !== lastSpokenLogId) {
+        lastSpokenLogId = topLog.id;
+        const topIsUnknown = /^Unknown(\s*\d+)?$/i.test((topLog.name || "").trim());
+        const topRecognized = (topLog.status === "verified" || topLog.decision === "ALLOW") && !topIsUnknown;
+        if (topRecognized) {
+          announcements.say(`${topLog.name}, recognised.`);
+        } else {
+          announcements.say(`${topLog.name || "Unknown person"}, not recognised.`);
+        }
+      }
+    }
   } catch (error) {
     if (requestId !== historyRequest) return;
     emptyHistory("History is unavailable.");
@@ -518,14 +546,7 @@ $("speech-toggle").addEventListener("click", () => {
 });
 document.addEventListener("visibilitychange", () => { if (document.hidden) announcements.cancel(); });
 window.addEventListener("pagehide", () => announcements.cancel());
-async function pollVoice() {
-  if (announcements.enabled && !document.hidden) {
-    try { const data = await api("/api/recognition/live"); if (!document.hidden) announcements.recognitions(data.faces); }
-    catch { announcements.cancel(); text("speech-status", "Live recognition unavailable; announcements paused."); }
-  }
-  setTimeout(pollVoice, 700);
-}
-pollVoice();
+// Voice announcements operate independently on access decisions and enrollment, not tied to camera video stream.
 
 // Decorative entrance only; station controls never wait for animation.
 if (window.gsap) {

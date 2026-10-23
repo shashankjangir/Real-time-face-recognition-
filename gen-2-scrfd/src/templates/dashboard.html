@@ -62,11 +62,6 @@
           <div class="camera-bottom">
             <span>Live view / local processing</span>
             <div class="camera-controls">
-              <button class="camera-control" id="speech-toggle" type="button" aria-pressed="false">Enable voice</button>
-              <select class="camera-control voice-gender-select" id="voice-gender" aria-label="Announcement voice">
-                <option value="female">Woman voice</option>
-                <option value="male">Man voice</option>
-              </select>
               <button class="camera-control" id="pause" type="button" aria-pressed="false">Pause view</button>
               <button class="camera-control" id="fullscreen" type="button">Full screen</button>
             </div>
@@ -108,10 +103,29 @@
             </div>
           </div>
           <div class="spec-foot">
-            <span id="speech-status" role="status">Voice is off. Enable it to hear recognition and enrollment.</span>
             <span id="focus-state">Focus mode unavailable</span>
             <span id="last-updated">Waiting for first measurement.</span>
             <span id="metric-note">Measurements appear when the station connects.</span>
+          </div>
+        </div>
+
+        <div class="spec-card voice-card" id="voice-station-panel">
+          <div class="voice-card-header">
+            <div>
+              <h2 class="spec-heading">Voice Announcer</h2>
+              <small class="field-note">Independent station audio feedback</small>
+            </div>
+            <button class="pill outline voice-toggle-btn" id="speech-toggle" type="button" aria-pressed="false">Enable voice</button>
+          </div>
+          <div class="voice-card-body">
+            <div class="voice-select-wrap">
+              <label for="voice-gender">Voice profile</label>
+              <select class="voice-gender-select" id="voice-gender" aria-label="Announcement voice">
+                <option value="female">Woman voice</option>
+                <option value="male">Man voice</option>
+              </select>
+            </div>
+            <p id="speech-status" class="field-note" role="status">Voice is off. Enable to hear access announcements.</p>
           </div>
         </div>
       </aside>
