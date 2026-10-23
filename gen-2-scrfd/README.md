@@ -4,8 +4,8 @@
 **Target Hardware:** Raspberry Pi 5 (4GB RAM) with 64GB microSD Card  
 **Face Detector:** InsightFace SCRFD-500M (`scrfd_500m_kps.onnx`) via ONNX Runtime  
 **Feature Embedder:** 128D Deep Metric Learning with Native Keypoint Alignment  
-**Inference Latency:** **<8 ms** per frame on Raspberry Pi 5 Cortex-A76 CPU (vs ~35 ms in Gen 1)  
-**Throughput:** **60+ FPS** detection capability  
+**Detector Inference Latency:** **<8 ms** per frame on Raspberry Pi 5 Cortex-A76 CPU (vs ~35 ms in Gen 1; full recognition pipeline: 70–150 ms)  
+**Detector Throughput:** **60+ FPS** raw detection capability  
 **Tilt Tolerance:** Native $\pm 60^\circ$ to $\pm 90^\circ$ single-pass detection (zero search overhead)  
 **Liveness & Attention:** Native 5-point landmark eye verification & Apple design dashboard
 
@@ -103,9 +103,7 @@ Physical testing on Raspberry Pi 5 hardware (Debian Trixie, libcamera 0.7.2, Son
 
 ### Dashboard authentication
 
-Set `ADMIN_ENROLLMENT_TOKEN` to a strong generated token before launching.
-The browser login uses username `admin` and that token as its password.
-No default token is supplied. Use HTTPS for network access. See [authentication](docs/enrollment.md).
+The web dashboard and live stream require no login credentials. Enrollment is protected by `ENROLLMENT_PASSWORD` (default: `123456789`). Set `ENROLLMENT_PASSWORD` in your environment or `.env` file before deploying.
 
 ### [2026-10-23 17:30 IST] — Dashboard Modernization, Hardware Adaptation & UI Polish
 
@@ -124,4 +122,23 @@ No default token is supplied. Use HTTPS for network access. See [authentication]
   - Unknown serialization: Frames first evaluate whether a single unknown person or multiple unknown people are present. A single person is shown as `Unknown`, while multiple unknown individuals are serialized as `Unknown 1`, `Unknown 2`, etc., across both live camera video overlays and stacked decision history.
 - **Cosmic Energy Flow Button Animations**:
   - Styled all interactive keys and buttons (`.pill`, `.camera-control`, `.ghost-btn`, `.dialog-close`, etc.) with continuous cosmic energy flowing gradients, radiant glowing auras, and subtle particle shimmer matching each button's unique color theme.
-
+- **Decision History "Show More" & Grouping Integrity**:
+  - Initial history view displays the 10 most recent activity groups with an interactive "Show more decisions" button that reveals previous decisions in increments of 10.
+  - Consecutive log grouping preserves hardware action outcomes: events only combine if identity, decision, reason, AND hardware action outcome (`succeeded`, `failed`, `cooldown_suppressed`) match, preventing failed actuations from being masked.
+  - Multi-day timestamps format both calendar date and time (`Oct 22, 17:28:45`), while same-day records format time. Grouped entries clearly indicate event count (`(4 events)`).
+- **Threshold Reliability & Multi-Tab Synchronization**:
+  - The default enrollment quality threshold is `0.70`, dynamically adjustable between `0.55` and `0.70`.
+  - Failed saves immediately revert the UI to the last server-confirmed threshold and report the error to the operator.
+  - Background polling synchronizes the slider with server state if changed from another browser tab.
+- **Camera Dock Usability & Dismiss Control**:
+  - Automatic floating is disabled when the camera feed is unavailable or paused, preventing empty docks.
+  - Added an accessible minimize/dismiss control (`✕`) to close the floating widget. Scrolling back up to the main camera resets dock state.
+  - Floating dock suppresses when focusing input fields inside the enrollment panel or on mobile viewports.
+- **Accessibility & Document Hierarchy**:
+  - Normalized camera status empty-feed heading to `<h2>` (`.feed-empty-title`) ensuring valid heading outlines without level jumps.
+  - Replaced repetitive live-region history announcements with targeted status updates on new access events.
+- **Interactive Voice Announcements (Man & Woman Voices, Immediate Change Reaction)**:
+  - Added real-time voice gender selector (`Woman voice` / `Man voice`) to the camera toolbar, adapting speech pitch and finding matching system TTS profiles.
+  - Recognition announcements immediately react to changes of persons in camera view: when a new person enters or visible individuals change, their name or "Unknown" is announced without waiting for previous cooldowns.
+- **Creator Profile & Footer Credits**:
+  - Embedded developer attribution in the dashboard footer: **Shashank Jangir** · IIT Delhi · Electrical Engineering ([github.com/shashankjangir](https://github.com/shashankjangir)).

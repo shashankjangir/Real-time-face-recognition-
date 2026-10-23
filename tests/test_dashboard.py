@@ -138,3 +138,17 @@ class DashboardTests(unittest.TestCase):
             dict(name='Unknown', identity_id=None, recognized=False)])
         overlay.timestamp = time.time()-2
         self.assertEqual(self.client.get('/api/recognition/live').get_json()['faces'], [])
+
+    def test_dashboard_markup_headings_and_history_elements(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'id="dock-dismiss"', response.data)
+        self.assertIn(b'id="history-show-more"', response.data)
+        self.assertIn(b'<h2 class="feed-empty-title" id="feed-empty-title">', response.data)
+        self.assertNotIn(b'<h3 id="feed-empty-title">', response.data)
+        self.assertNotIn(b'id="history-list" class="phone-history-list" aria-live="polite"', response.data)
+        self.assertIn(b'id="voice-gender"', response.data)
+        self.assertIn(b'Shashank Jangir', response.data)
+        self.assertIn(b'IIT Delhi', response.data)
+        self.assertIn(b'github.com/shashankjangir', response.data)
+

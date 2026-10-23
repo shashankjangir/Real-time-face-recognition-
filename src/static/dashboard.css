@@ -481,3 +481,124 @@ html.has-camera-dock body { padding-bottom: var(--camera-dock-space,320px); }
   color: var(--muted);
   font-size: 14px;
 }
+
+
+/* Heading level fix for empty camera feed */
+.feed-empty-title,
+.feed-empty h2 {
+  color: #f1f5f7;
+  font-size: 23px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.camera-shell.is-floating:not(:fullscreen) .feed-empty-title {
+  font-size: 16px;
+}
+@media (max-width: 700px) {
+  .feed-empty-title {
+    font-size: 21px;
+  }
+}
+
+/* Floating camera dock controls */
+.camera-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dock-dismiss-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.dock-dismiss-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.dock-dismiss-btn[hidden] {
+  display: none !important;
+}
+
+/* Phone style history show more actions */
+.history-actions {
+  display: flex;
+  justify-content: center;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #edf2f5;
+}
+.history-actions button[hidden] {
+  display: none !important;
+}
+
+
+/* Voice selector style */
+select.camera-control.voice-gender-select {
+  background: #172126;
+  color: #f1f5f7;
+  border: 1px solid #35434c;
+  border-radius: 4px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+}
+select.camera-control.voice-gender-select:hover,
+select.camera-control.voice-gender-select:focus {
+  background: #2c4353;
+  border-color: #647c8c;
+}
+select.camera-control.voice-gender-select option {
+  background: #172126;
+  color: #f1f5f7;
+}
+
+/* Developer footer credits */
+.developer-info {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.developer-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+.developer-divider {
+  color: var(--muted);
+}
+.developer-dept {
+  color: var(--muted);
+}
+.developer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s ease;
+}
+.developer-link:hover {
+  opacity: 0.75;
+}
+.dev-icon {
+  vertical-align: middle;
+}

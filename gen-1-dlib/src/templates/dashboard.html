@@ -45,13 +45,16 @@
         <div class="camera-shell" id="camera-shell">
           <div class="camera-top">
             <span id="feed-label">CAM 01 · CONNECTING</span>
-            <span id="clock">—</span>
+            <div class="camera-top-actions">
+              <span id="clock">—</span>
+              <button class="dock-dismiss-btn" id="dock-dismiss" type="button" aria-label="Minimize floating camera" title="Minimize floating camera" hidden>✕</button>
+            </div>
           </div>
           <div class="camera-stage">
             <img id="feed" alt="Live access-camera feed" hidden>
             <div class="feed-empty" id="feed-empty">
               <svg class="focus-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5H5v10m28-10h10v10M5 33v10h10m28-10v10H33M24 17v14m-7-7h14"/></svg>
-              <h3 id="feed-empty-title">Connecting to your camera</h3>
+              <h2 class="feed-empty-title" id="feed-empty-title">Connecting to your camera</h2>
               <p id="feed-empty-text">The live feed will appear here when the station is available.</p>
               <button class="pill outline" id="retry" type="button">Reconnect</button>
             </div>
@@ -60,6 +63,10 @@
             <span>Live view / local processing</span>
             <div class="camera-controls">
               <button class="camera-control" id="speech-toggle" type="button" aria-pressed="false">Enable voice</button>
+              <select class="camera-control voice-gender-select" id="voice-gender" aria-label="Announcement voice">
+                <option value="female">Woman voice</option>
+                <option value="male">Man voice</option>
+              </select>
               <button class="camera-control" id="pause" type="button" aria-pressed="false">Pause view</button>
               <button class="camera-control" id="fullscreen" type="button">Full screen</button>
             </div>
@@ -238,8 +245,11 @@
     <p id="history-status" class="field-note" role="status">Loading recent decisions.</p>
 
     <div class="phone-history-container" tabindex="0" role="region" aria-labelledby="history-title">
-      <div id="history-list" class="phone-history-list" aria-live="polite">
+      <div id="history-list" class="phone-history-list">
         <div class="phone-history-empty">Waiting for decisions…</div>
+      </div>
+      <div class="history-actions" id="history-actions">
+        <button class="pill outline" id="history-show-more" type="button" hidden>Show more decisions</button>
       </div>
     </div>
   </section>
@@ -250,6 +260,16 @@
     <div class="footer-col">
       <span class="footer-wordmark">Face / Access</span>
       <p class="footer-copy">Edge metric facial recognition and local policy coordination.</p>
+      <div class="developer-info">
+        <span class="developer-name">Shashank Jangir</span>
+        <span class="developer-divider">·</span>
+        <span class="developer-dept">IIT Delhi · Electrical Engineering</span>
+        <span class="developer-divider">·</span>
+        <a class="developer-link" href="https://github.com/shashankjangir" target="_blank" rel="noopener noreferrer">
+          <svg class="dev-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          github.com/shashankjangir
+        </a>
+      </div>
     </div>
     <div class="footer-col footer-right">
       <span>Raspberry Pi 5 · Camera Module 3 · SQLite WAL</span>

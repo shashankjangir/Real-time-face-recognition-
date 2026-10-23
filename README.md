@@ -13,7 +13,7 @@ face, and measured image quality.
 This repository includes two generations of the real-time access system:
 
 * **[Generation 1: dlib (HOG + ResNet-128D)](gen-1-dlib/)**: The stable baseline utilizing dlib's metric learning pipeline, software tilt rotational pyramid search, and Apple design dashboard.
-* **[Generation 2: SCRFD (InsightFace + ONNX Runtime)](gen-2-scrfd/)**: The next-generation high-speed pipeline utilizing SCRFD-500M ONNX inference. Runs at **60+ FPS (<8 ms)** on Raspberry Pi 5 CPU with native 5-keypoint detection and hardware tilt tolerance.
+* **[Generation 2: SCRFD (InsightFace + ONNX Runtime)](gen-2-scrfd/)**: The next-generation high-speed pipeline utilizing SCRFD-500M ONNX inference. Raw SCRFD ONNX detector inference runs in **<8 ms (~60+ FPS)** on Raspberry Pi 5 CPU with native 5-keypoint detection and hardware tilt tolerance (full end-to-end recognition pipeline: 70–150 ms).
 
 ---
 
@@ -248,4 +248,23 @@ Run speech logic checks with `node tests/test_speech.js` in addition to the Pyth
   - Unknown serialization: Frames first evaluate whether a single unknown person or multiple unknown people are present. A single person is shown as `Unknown`, while multiple unknown individuals are serialized as `Unknown 1`, `Unknown 2`, etc., across both live camera video overlays and stacked decision history.
 - **Cosmic Energy Flow Button Animations**:
   - Styled all interactive keys and buttons (`.pill`, `.camera-control`, `.ghost-btn`, `.dialog-close`, etc.) with continuous cosmic energy flowing gradients, radiant glowing auras, and subtle particle shimmer matching each button's unique color theme.
-
+- **Decision History "Show More" & Grouping Integrity**:
+  - Initial history view displays the 10 most recent activity groups with an interactive "Show more decisions" button that reveals previous decisions in increments of 10.
+  - Consecutive log grouping preserves hardware action outcomes: events only combine if identity, decision, reason, AND hardware action outcome (`succeeded`, `failed`, `cooldown_suppressed`) match, preventing failed actuations from being masked.
+  - Multi-day timestamps format both calendar date and time (`Oct 22, 17:28:45`), while same-day records format time. Grouped entries clearly indicate event count (`(4 events)`).
+- **Threshold Reliability & Multi-Tab Synchronization**:
+  - The default enrollment quality threshold is `0.70`, dynamically adjustable between `0.55` and `0.70`.
+  - Failed saves immediately revert the UI to the last server-confirmed threshold and report the error to the operator.
+  - Background polling synchronizes the slider with server state if changed from another browser tab.
+- **Camera Dock Usability & Dismiss Control**:
+  - Automatic floating is disabled when the camera feed is unavailable or paused, preventing empty docks.
+  - Added an accessible minimize/dismiss control (`✕`) to close the floating widget. Scrolling back up to the main camera resets dock state.
+  - Floating dock suppresses when focusing input fields inside the enrollment panel or on mobile viewports.
+- **Accessibility & Document Hierarchy**:
+  - Normalized camera status empty-feed heading to `<h2>` (`.feed-empty-title`) ensuring valid heading outlines without level jumps.
+  - Replaced repetitive live-region history announcements with targeted status updates on new access events.
+- **Interactive Voice Announcements (Man & Woman Voices, Immediate Change Reaction)**:
+  - Added real-time voice gender selector (`Woman voice` / `Man voice`) to the camera toolbar, adapting speech pitch and finding matching system TTS profiles.
+  - Recognition announcements immediately react to changes of persons in camera view: when a new person enters or visible individuals change, their name or "Unknown" is announced without waiting for previous cooldowns.
+- **Creator Profile & Footer Credits**:
+  - Embedded developer attribution in the dashboard footer: **Shashank Jangir** · IIT Delhi · Electrical Engineering ([github.com/shashankjangir](https://github.com/shashankjangir)).

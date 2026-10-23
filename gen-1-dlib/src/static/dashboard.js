@@ -76,6 +76,14 @@ async function updateStats() {
     text("drops", [counts.dropped, counts.stale, counts.out_of_order].map(v => v ?? "—").join(" / "));
     text("metric-note", "Rates since startup. Capture and recognition are measured separately.");
     const camera = data.camera || {};
+    if (typeof data.quality_threshold === "number") {
+      const serverVal = Math.round(data.quality_threshold * 100) / 100;
+      lastConfirmedThreshold = serverVal;
+      const knob = $("quality-knob");
+      if (document.activeElement !== knob && Math.abs(currentThreshold - serverVal) > 0.005) {
+        setQualityThreshold(serverVal, false);
+      }
+    }
     if (Array.isArray(camera.resolution) && camera.resolution.length === 2 && camera.resolution[0] > 0 && camera.resolution[1] > 0) {
       const stage = $("camera-stage");
       if (stage && (!stage.style.aspectRatio || stage.style.aspectRatio === "auto")) {
@@ -105,6 +113,7 @@ function setBusy(value, action = "") {
   if (value) text("form-status", action);
 }
 let currentThreshold = parseFloat(document.body.dataset.qualityThreshold) || 0.70;
+let lastConfirmedThreshold = currentThreshold;
 let lastQualityData = null;
 
 function setQualityThreshold(val, syncBackend = true) {
@@ -126,12 +135,18 @@ function setQualityThreshold(val, syncBackend = true) {
   }
 
   if (syncBackend) {
-    try { localStorage.setItem("face_access_quality_threshold", formatted); } catch {}
+    const prevConfirmed = lastConfirmedThreshold;
     api("/api/config/quality", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({threshold: val})
-    }).catch(err => console.debug("Threshold sync note:", err.message));
+    }).then(() => {
+      lastConfirmedThreshold = val;
+      try { localStorage.setItem("face_access_quality_threshold", formatted); } catch {}
+    }).catch(err => {
+      text("form-status", "Quality threshold save failed: " + err.message);
+      setQualityThreshold(prevConfirmed, false);
+    });
   }
 }
 
@@ -195,107 +210,143 @@ function historyQuery() {
   $("export").href = "/api/csv?" + query;
   return query;
 }
-function stackRecentLogs(logs, maxCount = 10) {
+let historyVisibleLimit = 10;
+let allRecentLogs = [];
+let lastHistorySig = "";
+let lastRenderedLimit = 10;
+
+function formatLogTime(timestamp) {
+  const stamp = new Date(timestamp);
+  if (isNaN(stamp.getTime())) return timestamp;
+  const now = new Date();
+  const isToday = stamp.getFullYear() === now.getFullYear() &&
+                  stamp.getMonth() === now.getMonth() &&
+                  stamp.getDate() === now.getDate();
+  const timePart = stamp.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit"});
+  if (isToday) return timePart;
+  const datePart = stamp.toLocaleDateString([], {month: "short", day: "numeric"});
+  return `${datePart}, ${timePart}`;
+}
+
+function stackRecentLogs(logs, maxCount) {
   const stacked = [];
   for (const log of logs) {
     const decision = (log.decision || (log.status === "verified" ? "allow" : "deny")).toUpperCase();
     let name = (log.name || "Unknown").trim();
+    const reason = log.reason || "";
+    const outcome = log.action_outcome || "";
     const last = stacked[stacked.length - 1];
 
-    if (last && last.name === name && last.decision === decision) {
+    if (last && last.name === name && last.decision === decision && last.reason === reason && last.action_outcome === outcome) {
       last.count += 1;
     } else {
       stacked.push({
         ...log,
         name,
         decision,
+        reason,
+        action_outcome: outcome,
         count: 1
       });
-      if (stacked.length >= maxCount) break;
+      if (typeof maxCount === "number" && stacked.length >= maxCount) break;
     }
-  }
-
-  // Count unknown groups in decision history
-  const unknownGroups = stacked.filter(item => /^Unknown(\s*\d+)?$/i.test(item.name.trim()));
-  if (unknownGroups.length > 1) {
-    // If multiple unknown entries exist in history, series them as Unknown 1, Unknown 2, etc.
-    let uIndex = 1;
-    for (const item of stacked) {
-      if (/^Unknown(\s*\d+)?$/i.test(item.name.trim())) {
-        item.name = `Unknown ${uIndex++}`;
-      }
-    }
-  } else if (unknownGroups.length === 1) {
-    // Single unknown entry is kept as "Unknown"
-    unknownGroups[0].name = "Unknown";
   }
 
   return stacked;
 }
 
+function renderHistory(logs) {
+  const historyList = $("history-list");
+  if (!historyList) return;
+  const showMoreBtn = $("history-show-more");
+
+  if (!logs || !logs.length) {
+    emptyHistory("No decisions recorded in this period.");
+    text("history-status", "No decisions found for the selected filter.");
+    if (showMoreBtn) showMoreBtn.hidden = true;
+    return;
+  }
+
+  const allStacked = stackRecentLogs(logs);
+  const displayed = allStacked.slice(0, historyVisibleLimit);
+
+  historyList.replaceChildren();
+
+  for (const item of displayed) {
+    const row = document.createElement("div");
+    row.className = "phone-history-row";
+
+    const avatar = document.createElement("div");
+    const isAllow = item.decision === "ALLOW";
+    avatar.className = "phone-row-avatar " + (isAllow ? "allow" : "deny");
+    avatar.innerHTML = isAllow
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+    const main = document.createElement("div");
+    main.className = "phone-row-main";
+
+    const title = document.createElement("div");
+    title.className = "phone-row-title";
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "phone-row-name";
+    nameEl.textContent = item.count > 1 ? `${item.name} (${item.count} events)` : item.name;
+
+    const badge = document.createElement("span");
+    badge.className = "phone-row-badge " + (isAllow ? "allow" : "deny");
+    badge.textContent = item.decision;
+
+    title.append(nameEl, badge);
+
+    const sub = document.createElement("div");
+    sub.className = "phone-row-sub";
+    sub.textContent = `${human(item.reason)} · ${human(item.action_outcome)}`;
+
+    main.append(title, sub);
+
+    const meta = document.createElement("div");
+    meta.className = "phone-row-time";
+    meta.textContent = formatLogTime(item.timestamp);
+
+    row.append(avatar, main, meta);
+    historyList.append(row);
+  }
+
+  const remaining = allStacked.length - displayed.length;
+  if (showMoreBtn) {
+    if (remaining > 0) {
+      showMoreBtn.hidden = false;
+      showMoreBtn.textContent = `Show more decisions (${remaining} remaining)`;
+    } else {
+      showMoreBtn.hidden = true;
+    }
+  }
+
+  text("history-status", `Showing ${displayed.length} of ${allStacked.length} activity groups. Export CSV includes full audit log.`);
+}
+
 async function loadHistory() {
-  const requestId = ++historyRequest, query = historyQuery(); query.set("limit", "100");
+  const requestId = ++historyRequest, query = historyQuery(); query.set("limit", "200");
   try {
     const data = await api("/api/logs?" + query); if (requestId !== historyRequest) return;
-    const historyList = $("history-list");
-    if (!historyList) return;
-    historyList.replaceChildren();
+    const logs = data.logs || [];
+    allRecentLogs = logs;
 
-    if (!data.logs || !data.logs.length) {
-      emptyHistory("No decisions recorded in this period.");
-      text("history-status", "No decisions found for the selected filter.");
+    const sig = logs.map(l => `${l.id || l.timestamp}-${l.status}-${l.action_outcome}`).join("|");
+    if (sig === lastHistorySig && historyVisibleLimit === lastRenderedLimit) {
       return;
     }
+    lastHistorySig = sig;
+    lastRenderedLimit = historyVisibleLimit;
 
-    const stacked = stackRecentLogs(data.logs, 10);
-
-    for (const item of stacked) {
-      const row = document.createElement("div");
-      row.className = "phone-history-row";
-
-      const avatar = document.createElement("div");
-      const isAllow = item.decision === "ALLOW";
-      avatar.className = "phone-row-avatar " + (isAllow ? "allow" : "deny");
-      avatar.innerHTML = isAllow
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-
-      const main = document.createElement("div");
-      main.className = "phone-row-main";
-
-      const title = document.createElement("div");
-      title.className = "phone-row-title";
-
-      const nameEl = document.createElement("span");
-      nameEl.className = "phone-row-name";
-      nameEl.textContent = item.count > 1 ? `${item.name} (${item.count})` : item.name;
-
-      const badge = document.createElement("span");
-      badge.className = "phone-row-badge " + (isAllow ? "allow" : "deny");
-      badge.textContent = item.decision;
-
-      title.append(nameEl, badge);
-
-      const sub = document.createElement("div");
-      sub.className = "phone-row-sub";
-      sub.textContent = `${human(item.reason)} · ${human(item.action_outcome)}`;
-
-      main.append(title, sub);
-
-      const meta = document.createElement("div");
-      meta.className = "phone-row-time";
-      const stamp = new Date(item.timestamp);
-      meta.textContent = isNaN(stamp) ? item.timestamp : stamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-
-      row.append(avatar, main, meta);
-      historyList.append(row);
-    }
-
-    text("history-status", `Showing ${stacked.length} most recent activity groups (up to 10 stacked). Export CSV includes full log.`);
+    renderHistory(logs);
   } catch (error) {
     if (requestId !== historyRequest) return;
     emptyHistory("History is unavailable.");
     text("history-status", error.message);
+    const showMoreBtn = $("history-show-more");
+    if (showMoreBtn) showMoreBtn.hidden = true;
   }
 }
 
@@ -307,9 +358,24 @@ function emptyHistory(message) {
   empty.textContent = message;
   historyList.replaceChildren(empty);
 }
-$("refresh-history").addEventListener("click", loadHistory);
-$("history-hours").addEventListener("change", loadHistory);
-let searchTimer; $("history-name").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadHistory, 350); });
+
+function resetHistoryView() {
+  historyVisibleLimit = 10;
+  lastRenderedLimit = -1;
+  loadHistory();
+}
+
+const showMoreBtn = $("history-show-more");
+if (showMoreBtn) {
+  showMoreBtn.addEventListener("click", () => {
+    historyVisibleLimit += 10;
+    renderHistory(allRecentLogs);
+  });
+}
+
+$("refresh-history").addEventListener("click", resetHistoryView);
+$("history-hours").addEventListener("change", resetHistoryView);
+let searchTimer; $("history-name").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(resetHistoryView, 350); });
 function renderIdentities() {
   const query = $("identity-search").value.toLowerCase();
   const matches = identities.filter(identity => identity.name.toLowerCase().includes(query));
@@ -351,13 +417,16 @@ clock(); setInterval(clock, 1000); connectFeed(); poll();
 
 // Move the existing image and controls visually; never create another MJPEG client.
 const cameraSlot = $("camera-slot"), cameraShell = $("camera-shell");
-let docked = false, dockPosition = null, drag = null;
+let docked = false, dockPosition = null, drag = null, dockDismissed = false;
+const dockDismissBtn = $("dock-dismiss");
+
 function setCameraDock(enabled) {
   if (document.fullscreenElement) return;
   if (enabled !== docked) {
     if (enabled) cameraSlot.style.minHeight = cameraSlot.getBoundingClientRect().height + "px";
     cameraShell.classList.toggle("is-floating", enabled);
     document.documentElement.classList.toggle("has-camera-dock", enabled);
+    if (dockDismissBtn) dockDismissBtn.hidden = !enabled;
     adaptFeed();
     if (!enabled) cameraSlot.style.minHeight = "";
     docked = enabled;
@@ -369,8 +438,16 @@ function setCameraDock(enabled) {
 function updateCameraDock() {
   const box = cameraSlot.getBoundingClientRect();
   const visible = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0));
-  const editingOnMobile = innerWidth <= 700 && document.activeElement.matches("input, select, textarea");
-  setCameraDock(!editingOnMobile && visible < Math.min(box.height * .5, innerHeight * .4));
+  if (visible > box.height * 0.7) {
+    dockDismissed = false;
+  }
+  const feedEl = $("feed");
+  const feedAvailable = !paused && feedEl && !feedEl.hidden;
+  const editingInsideEnrollment = document.activeElement && document.activeElement.matches("input, select, textarea, button") && document.activeElement.closest("#enrollment");
+  const editingOnMobile = innerWidth <= 700 && document.activeElement && document.activeElement.matches("input, select, textarea");
+
+  const shouldFloat = !dockDismissed && feedAvailable && !editingInsideEnrollment && !editingOnMobile && visible < Math.min(box.height * .5, innerHeight * .4);
+  setCameraDock(shouldFloat);
 }
 const cameraObserver = new IntersectionObserver(updateCameraDock, {threshold:[0,.25,.5,.75,1]});
 cameraObserver.observe(cameraSlot);
@@ -416,6 +493,24 @@ dragHandle.addEventListener("keydown", event => {
 window.addEventListener("resize", () => { if (docked && dockPosition && !document.fullscreenElement) placeDock(dockPosition.x, dockPosition.y); });
 
 const announcements = new VoiceAnnouncements(window, message => text("speech-status", message));
+const voiceGenderSelect = $("voice-gender");
+if (voiceGenderSelect) {
+  try {
+    const savedGender = localStorage.getItem("face_access_voice_gender");
+    if (savedGender === "male" || savedGender === "female") {
+      voiceGenderSelect.value = savedGender;
+      announcements.setGender(savedGender);
+    }
+  } catch {}
+  voiceGenderSelect.addEventListener("change", e => {
+    const val = e.target.value === "male" ? "male" : "female";
+    announcements.setGender(val);
+    try { localStorage.setItem("face_access_voice_gender", val); } catch {}
+    if (announcements.enabled) {
+      announcements.say(val === "male" ? "Man voice selected." : "Woman voice selected.", true);
+    }
+  });
+}
 $("speech-toggle").addEventListener("click", () => {
   announcements.toggle();
   $("speech-toggle").setAttribute("aria-pressed", String(announcements.enabled));
@@ -440,4 +535,12 @@ if (window.gsap) {
   });
   document.addEventListener("visibilitychange", () => { if (document.hidden) motion.revert(); });
   window.addEventListener("pagehide", () => motion.revert());
+}
+
+if (dockDismissBtn) {
+  dockDismissBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    dockDismissed = true;
+    setCameraDock(false);
+  });
 }

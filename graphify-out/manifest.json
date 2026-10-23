@@ -210,15 +210,15 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/src/static/dashboard.js": {
-    "mtime": 1792757513.9304862,
-    "seen": 1792757607.1869538,
-    "ast_hash": "082249cabbaf5006c8729d7a31701e4b",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "be091b227f5e9ee22fcfbce2f23ce772",
     "semantic_hash": ""
   },
   "gen-1-dlib/src/static/speech.js": {
-    "mtime": 1792001770.0,
-    "seen": 1792646196.4857004,
-    "ast_hash": "eb67b9111ac479cadfff0e6429c4a84b",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "1f05e11949e91337bcbbd709bc382bce",
     "semantic_hash": ""
   },
   "gen-1-dlib/src/utils.py": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/tests/test_dashboard.py": {
-    "mtime": 1792756192.3089921,
-    "seen": 1792756239.6419075,
-    "ast_hash": "c1e0a87c432bae1ce750e714ac3f7554",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "ef5986991106b750d9e7eaead61d9c48",
     "semantic_hash": ""
   },
   "gen-1-dlib/tests/test_enrollment.py": {
@@ -396,15 +396,15 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/static/dashboard.js": {
-    "mtime": 1792757513.9310126,
-    "seen": 1792757607.1869538,
-    "ast_hash": "082249cabbaf5006c8729d7a31701e4b",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "be091b227f5e9ee22fcfbce2f23ce772",
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/static/speech.js": {
-    "mtime": 1792001770.0,
-    "seen": 1792646196.4857004,
-    "ast_hash": "eb67b9111ac479cadfff0e6429c4a84b",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "1f05e11949e91337bcbbd709bc382bce",
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/utils.py": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/tests/test_dashboard.py": {
-    "mtime": 1792756192.3099935,
-    "seen": 1792756239.6419075,
-    "ast_hash": "c1e0a87c432bae1ce750e714ac3f7554",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "ef5986991106b750d9e7eaead61d9c48",
     "semantic_hash": ""
   },
   "gen-2-scrfd/tests/test_enrollment.py": {
@@ -564,15 +564,15 @@
     "semantic_hash": ""
   },
   "src/static/dashboard.js": {
-    "mtime": 1792757513.9299424,
-    "seen": 1792757607.1869538,
-    "ast_hash": "082249cabbaf5006c8729d7a31701e4b",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "be091b227f5e9ee22fcfbce2f23ce772",
     "semantic_hash": ""
   },
   "src/static/speech.js": {
-    "mtime": 1792001770.0,
-    "seen": 1792646196.4857004,
-    "ast_hash": "eb67b9111ac479cadfff0e6429c4a84b",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "1f05e11949e91337bcbbd709bc382bce",
     "semantic_hash": ""
   },
   "src/utils.py": {
@@ -606,9 +606,9 @@
     "semantic_hash": ""
   },
   "tests/test_dashboard.py": {
-    "mtime": 1792756192.307993,
-    "seen": 1792756239.6419075,
-    "ast_hash": "c1e0a87c432bae1ce750e714ac3f7554",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "ef5986991106b750d9e7eaead61d9c48",
     "semantic_hash": ""
   },
   "tests/test_enrollment.py": {
@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1792757513.9315436,
-    "seen": 1792757607.1869538,
-    "ast_hash": "bef8ea976c47ed747ac8320b67cd6cb9",
+    "mtime": 1792760749.0331182,
+    "seen": 1792760808.4988775,
+    "ast_hash": "587b5ee63362b36cf44637f2e7f3a30d",
     "semantic_hash": ""
   },
   "archive/README.md": {
@@ -924,9 +924,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/README.md": {
-    "mtime": 1792757513.9315436,
-    "seen": 1792757607.1869538,
-    "ast_hash": "dfb1e856927f7957f1d139835ea0e757",
+    "mtime": 1792760749.0331182,
+    "seen": 1792760808.4988775,
+    "ast_hash": "4ba2ebb2b5df08236c52e07ac5c496e8",
     "semantic_hash": ""
   },
   "gen-1-dlib/docs/architecture.md": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "gen-1-dlib/src/templates/dashboard.html": {
-    "mtime": 1792756962.5214531,
-    "seen": 1792757037.1051981,
-    "ast_hash": "c6e70abb0774e9acff8cb7ecb2083efb",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "7ad19c1629442e8bf3f615df91bf16d1",
     "semantic_hash": ""
   },
   "gen-2-scrfd/CONTRIBUTING.md": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/README.md": {
-    "mtime": 1792757513.9315436,
-    "seen": 1792757607.1869538,
-    "ast_hash": "82f367e7731d815b045e93fe7152bd86",
+    "mtime": 1792760749.0331182,
+    "seen": 1792760808.4988775,
+    "ast_hash": "8a0d2dd7214f8c1c031c3e5f7d6ac68e",
     "semantic_hash": ""
   },
   "gen-2-scrfd/docs/architecture.md": {
@@ -1140,9 +1140,9 @@
     "semantic_hash": ""
   },
   "gen-2-scrfd/src/templates/dashboard.html": {
-    "mtime": 1792756962.5214531,
-    "seen": 1792757037.1051981,
-    "ast_hash": "c6e70abb0774e9acff8cb7ecb2083efb",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "7ad19c1629442e8bf3f615df91bf16d1",
     "semantic_hash": ""
   },
   "guide_raspberry.md": {
@@ -1218,9 +1218,9 @@
     "semantic_hash": ""
   },
   "src/templates/dashboard.html": {
-    "mtime": 1792756962.5214531,
-    "seen": 1792757037.1051981,
-    "ast_hash": "c6e70abb0774e9acff8cb7ecb2083efb",
+    "mtime": 1792760749.016078,
+    "seen": 1792760808.4988775,
+    "ast_hash": "7ad19c1629442e8bf3f615df91bf16d1",
     "semantic_hash": ""
   },
   "recognize_stream.py": {
@@ -1341,6 +1341,24 @@
     "mtime": 1792748023.9816892,
     "seen": 1792753821.5648909,
     "ast_hash": "0ef0b7757786231c1a6818ac9371038b",
+    "semantic_hash": ""
+  },
+  ".impeccable/critique/2026-10-23T12-19-51Z__src-templates-dashboard-html.md": {
+    "mtime": 1792757991.1735063,
+    "seen": 1792759601.6898804,
+    "ast_hash": "20bf3232854cc67a4f2b46b2cb3b39a2",
+    "semantic_hash": ""
+  },
+  "MODIFICATIONS.md": {
+    "mtime": 1792758288.687812,
+    "seen": 1792759601.6898804,
+    "ast_hash": "2c2beb8d1b36e0e5b49690066adf4dd2",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20261023_121800_4a3c7761_analyze_what_modifications_can_be_done.md": {
+    "mtime": 1792757880.3330715,
+    "seen": 1792759601.6898804,
+    "ast_hash": "1dc1abd8386118df66d5f43547fc1cf6",
     "semantic_hash": ""
   }
 }
