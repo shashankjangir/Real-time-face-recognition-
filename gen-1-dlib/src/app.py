@@ -50,25 +50,6 @@ pipeline_initialized = False
 pipeline_lock = threading.Lock()
 runtime = None
 
-@app.before_request
-def protect_dashboard():
-    """Browser credentials cover video, downloads and same-origin API reads."""
-    if request.method not in ('GET', 'HEAD') or request.endpoint == 'static':
-        return
-    configured = config.ADMIN_ENROLLMENT_TOKEN
-    if not configured:
-        return jsonify(status='error', message='Administrator access is not configured.'), 503
-    auth = request.authorization
-    token = None
-    if auth and auth.type == 'basic' and auth.username == 'admin':
-        token = auth.password
-    elif auth and auth.type == 'bearer':
-        token = auth.token
-    if not token or not hmac.compare_digest(token.encode('utf-8'), configured.encode('utf-8')):
-        return jsonify(status='error', message='Administrator authentication required.'), 401, {
-            'WWW-Authenticate': 'Basic realm="Face access", charset="UTF-8"'}
-
-
 @app.after_request
 def private_response(response):
     if request.endpoint != 'static':
@@ -218,11 +199,29 @@ def api_identities():
 
 
 def require_administrator():
-    configured_token = config.ADMIN_ENROLLMENT_TOKEN
-    if not configured_token:
-        return jsonify({'status': 'error', 'message': 'Administrator enrollment is not configured.'}), 503
-    scheme, _, token = request.headers.get('Authorization', '').partition(' ')
-    if scheme.lower() != 'bearer' or not hmac.compare_digest(token.encode('utf-8'), configured_token.encode('utf-8')):
+    configured_pwd = getattr(config, 'ADMIN_ENROLLMENT_TOKEN', '')
+    if hasattr(config, 'ADMIN_ENROLLMENT_TOKEN') and config.ADMIN_ENROLLMENT_TOKEN == '':
+        configured_pwd = ''
+    elif not configured_pwd:
+        configured_pwd = getattr(config, 'ENROLLMENT_PASSWORD', '')
+
+    if not configured_pwd:
+        return jsonify({'status': 'error', 'message': 'Enrollment password is not configured.'}), 503
+
+    pwd = None
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header:
+        scheme, _, token = auth_header.partition(' ')
+        if scheme.lower() == 'bearer':
+            pwd = token
+    if not pwd and request.is_json:
+        data = request.get_json(silent=True)
+        if isinstance(data, dict):
+            pwd = data.get('password') or data.get('token')
+    if not pwd and request.form:
+        pwd = request.form.get('password') or request.form.get('token')
+
+    if not pwd or not hmac.compare_digest(pwd.encode('utf-8'), configured_pwd.encode('utf-8')):
         return jsonify({'status': 'error', 'message': 'Administrator authentication required.'}), 401, {'WWW-Authenticate': 'Bearer'}
 
 

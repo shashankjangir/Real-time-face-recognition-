@@ -77,7 +77,7 @@ python -m pip install -r requirements-face-recognition.txt
 For Raspberry Pi, follow [the hardware installation guide](docs/raspberry-pi-setup.md)
 instead so the environment can use the system camera bindings.
 
-Configure a strong `ADMIN_ENROLLMENT_TOKEN` as described under Enrollment before starting.
+The web dashboard and live stream require no login credentials. Enrollment is protected by `ENROLLMENT_PASSWORD` (default: `123456789`).
 
 ```bash
 python app.py
@@ -91,10 +91,7 @@ See [decision and failure behavior](docs/decision-safety.md).
 
 ### Enrollment
 
-Configure `ADMIN_ENROLLMENT_TOKEN` before starting the server, then sign in to the browser prompt as `admin` with that token as the password.
-Use the same token in the dashboard's administrator token field for enrollment. Dashboard/API access and web enrollment are disabled when the
-variable is unset. See [enrollment and authentication](docs/enrollment.md) for
-setup, API requests, quality checks, and local CLI usage.
+The web dashboard and live camera stream are available without login credentials. To protect identity enrollment, set an `ENROLLMENT_PASSWORD` in your environment or `.env` file (defaults to `123456789` if unset). Enter this password into the enrollment form on the dashboard to register new faces. See [enrollment and authentication](docs/enrollment.md) for setup, API requests, quality checks, and local CLI usage.
 
 ```bash
 python enroll.py --name "Jane Doe" --image /path/to/portrait.jpg

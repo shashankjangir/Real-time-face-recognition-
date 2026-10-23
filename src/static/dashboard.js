@@ -76,7 +76,7 @@ async function updateStats() {
 }
 function credentials() {
   const token = $("admin-token").value.trim();
-  if (!token) { $("admin-token").focus(); throw new Error("Enter your administrator token first."); }
+  if (!token) { $("admin-token").focus(); throw new Error("Enter the enrollment password first."); }
   return {"Authorization": "Bearer " + token, "Content-Type": "application/json"};
 }
 function setBusy(value, action = "") {
@@ -117,8 +117,7 @@ $("enroll-form").addEventListener("submit", async event => {
     const data = await api("/api/enroll", {method:"POST", headers, body:JSON.stringify({name})});
     text("form-status", data.message + ". Capture quality: " + number(data.quality_score, 3) + ".");
     announcements.enrolled(name);
-    $("person-name").value = ""; $("admin-token").value = "";
-    $("admin-token").type = "password"; text("show-token", "Show"); $("show-token").setAttribute("aria-pressed", "false");
+    $("person-name").value = "";
     await updateStats();
   } catch (error) { text("form-status", error.message); }
   finally { setBusy(false); }

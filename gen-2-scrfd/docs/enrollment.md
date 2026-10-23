@@ -1,61 +1,46 @@
-# Enrollment and administrator authentication
+# Enrollment and authentication
 
 [Back to the project](../README.md)
 
-## Configure the administrator token
+## Enrollment password
 
-Generate a strong token locally:
+Face enrollment requires a password to prevent unauthorized identity registration.
 
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-Set it in the same shell that launches the server. Replace the placeholder with
-your generated value; never commit the token.
+Set it in your shell or `.env` file before launching:
 
 ```powershell
-$env:ADMIN_ENROLLMENT_TOKEN = "<your-generated-token>"
+$env:ENROLLMENT_PASSWORD = "your-password"
 python app.py
 ```
 
 On Linux:
 
 ```bash
-export ADMIN_ENROLLMENT_TOKEN='<your-generated-token>'
+export ENROLLMENT_PASSWORD='your-password'
 python app.py
 ```
 
-An unset or empty token disables the dashboard, read APIs, and HTTP enrollment. `.env.example` documents the
-variables; copying it to `.env` does not load them automatically.
+If unset, `ENROLLMENT_PASSWORD` defaults to `123456789`. You can also use `ADMIN_ENROLLMENT_TOKEN` as an alias.
 
-## Dashboard and API
+## Dashboard and live stream
 
-The browser first requests HTTP credentials: username `admin`, password your
-`ADMIN_ENROLLMENT_TOKEN`. Video, history, exports, and health checks all require
-these credentials. API readers may instead send `Authorization: Bearer <token>`.
-Use HTTPS through your deployment proxy for network access; HTTP authentication
-alone does not encrypt credentials. Browsers may cache HTTP credentials for the
-session; use a private browser session on shared devices. No default token is
-supplied by the launch scripts.
+The dashboard, live MJPEG camera stream, access logs, metrics, dynamic CSV reports, and health checks are accessible without login credentials.
 
-Enrollment and quality-check POST requests still require an explicit bearer token;
-browser HTTP credentials alone cannot authorize these writes.
+Only **Capture & enroll** (`POST /api/enroll`) and **Check face quality** (`POST /api/enrollment/quality`) require the enrollment password.
 
-Enter the token in the dashboard password field, then select **Enroll Identity**.
-Keep exactly one face visible with even lighting and clear focus. The dashboard
-clears the token field after a response and does not persist it in browser storage.
+Enter the password in the dashboard's **Enrollment password** field, then select **Capture & enroll**.
 
-API clients send `POST /api/enroll`, a JSON body such as `{"name":"Jane Doe"}`,
-and `Authorization: Bearer <token>`. A successful response includes the identity
-ID and measured `quality_score`.
+API clients send `POST /api/enroll` with JSON `{"name": "Jane Doe"}` and either:
+- Header: `Authorization: Bearer <password>`
+- Or body: `{"name": "Jane Doe", "password": "<password>"}`
 
 | HTTP status | Meaning |
 | --- | --- |
 | 200 | Identity saved and recognition gallery reloaded. |
 | 400 | Invalid JSON object or name. |
-| 401 | Missing or incorrect administrator token. |
+| 401 | Missing or incorrect enrollment password. |
 | 422 | Missing frame, zero/multiple faces, invalid embedding, or poor quality. |
-| 503 | Administrator token unconfigured, synthetic camera, or model unavailable. |
+| 503 | Enrollment password unconfigured, synthetic camera, or model unavailable. |
 
 Quality combines crop sharpness, brightness, and face size. Scores below
 `ENROLLMENT_MIN_QUALITY` (currently `0.70`) are rejected. This is a heuristic

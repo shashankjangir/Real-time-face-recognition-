@@ -16,18 +16,13 @@ export CAMERA_BACKEND="${CAMERA_BACKEND:-auto}"
 export CAMERA_INDEX="${CAMERA_INDEX:-0}"
 export PYTHONIOENCODING="utf-8"
 
-# Prompt for admin credentials before server startup
-if [ -z "$ADMIN_ENROLLMENT_TOKEN" ]; then
+# Set enrollment password (dashboard and video streams require no login password)
+if [ -z "$ENROLLMENT_PASSWORD" ] && [ -z "$ADMIN_ENROLLMENT_TOKEN" ]; then
+    export ENROLLMENT_PASSWORD="123456789"
+    export ADMIN_ENROLLMENT_TOKEN="$ENROLLMENT_PASSWORD"
     echo "=========================================================="
-    read -p "Enter admin username: " USERNAME_INPUT
-    if [ "$USERNAME_INPUT" = "shashank" ]; then
-        export ADMIN_ENROLLMENT_TOKEN="123456789"
-        echo "Welcome Shashank (Admin). Password set to: 123456789"
-    else
-        read -s -p "Enter token password: " PASS_INPUT
-        echo ""
-        export ADMIN_ENROLLMENT_TOKEN="$PASS_INPUT"
-    fi
+    echo "Dashboard access: Open (no login password required)"
+    echo "Enrollment password set to: $ENROLLMENT_PASSWORD"
     echo "=========================================================="
 fi
 

@@ -8,6 +8,20 @@ from pathlib import Path
 
 # Base Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load local .env file if present
+_env_file = BASE_DIR / ".env"
+if _env_file.is_file():
+    try:
+        with open(_env_file, "r", encoding="utf-8") as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith("#") and "=" in _line:
+                    _k, _v = _line.split("=", 1)
+                    os.environ.setdefault(_k.strip(), _v.strip().strip("'\""))
+    except Exception:
+        pass
+
 DATA_DIR = BASE_DIR / "data"
 REPORTS_DIR = BASE_DIR / "reports"
 KNOWN_FACES_DIR = BASE_DIR / "known_faces"
@@ -40,8 +54,10 @@ RECOGNITION_MIN_MARGIN = 0.02  # Runner-up must be farther away by at least this
 FACE_DETECTION_MODEL = "hog"
 MIN_FACE_SIZE = 20  # Minimum face size in pixels
 
-# Enrollment is disabled over HTTP until an administrator token is configured.
-ADMIN_ENROLLMENT_TOKEN = os.getenv("ADMIN_ENROLLMENT_TOKEN", "")
+# Password required for enrolling a face (via web dashboard or POST /api/enroll).
+# Can be configured via ENROLLMENT_PASSWORD or ADMIN_ENROLLMENT_TOKEN.
+ENROLLMENT_PASSWORD = os.getenv("ENROLLMENT_PASSWORD", os.getenv("ADMIN_ENROLLMENT_TOKEN", "123456789"))
+ADMIN_ENROLLMENT_TOKEN = ENROLLMENT_PASSWORD
 ENROLLMENT_MIN_QUALITY = 0.70
 
 # Drawing / Annotation overlay on live video

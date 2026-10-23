@@ -51,28 +51,41 @@ class AuditRegressions(unittest.TestCase):
             stored = np.frombuffer(db.get_identity_by_id(identity)['encoding'], dtype=np.float64)
             np.testing.assert_allclose(engine.known_matrix[0], stored, atol=1e-7)
 
-    def test_private_routes_authenticate_before_pipeline_access(self):
+    def test_public_routes_accessible_without_password_and_enrollment_requires_password(self):
         web = importlib.import_module('src.app')
         client = web.app.test_client()
         paths = ('/', '/stream.mjpg', '/api/recognition/live', '/api/stats', '/api/logs', '/api/csv', '/api/identities', '/health')
-        with patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', 'audit-token'), patch.object(web, 'initialize_pipeline') as init:
+        runtime = Mock()
+        runtime.stream.return_value = iter([b'--frame\r\nContent-Type: image/jpeg\r\n\r\ntest-frame\r\n'])
+        runtime.snapshot.return_value = {'capture_fps': 30, 'delivery_to_decision_latency': {'mean_ms': 12.0}}
+        db = Mock()
+        db.get_all_identities.return_value = []
+        db.get_statistics.return_value = {}
+        db.get_recent_logs.return_value = []
+        report_gen = Mock()
+        report_gen.generate_access_log_csv.return_value = ('test.csv', 'header\n')
+        camera = Mock(backend=object())
+        engine = Mock(known_names=[])
+        engine.overlay.get_active_faces.return_value = []
+
+        with patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', 'audit-token'), patch.object(web, 'initialize_pipeline'), patch.object(web, 'runtime', runtime), patch.object(web, 'db_manager', db), patch.object(web, 'report_generator', report_gen), patch.object(web, 'camera_manager', camera), patch.object(web, 'recognition_engine', engine):
+            # All public routes load without any login or authorization credentials
             for path in paths:
                 for method in ('GET', 'HEAD'):
                     response = client.open(path, method=method)
-                    self.assertEqual(response.status_code, 401, path)
-                    self.assertIn('Basic', response.headers['WWW-Authenticate'])
-            self.assertEqual(client.get('/', auth=('admin', 'wrong')).status_code, 401)
-            self.assertEqual(client.get('/', auth=('other', 'audit-token')).status_code, 401)
-            init.assert_not_called()
-            self.assertEqual(client.get('/', auth=('admin', 'audit-token')).status_code, 200)
-            self.assertEqual(client.get('/', headers={'Authorization': 'Bearer audit-token'}).status_code, 200)
-            self.assertEqual(client.post('/api/enroll', auth=('admin', 'audit-token'), json={'name': 'Audit'}).status_code, 401)
-        with patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', ''):
-            self.assertEqual(client.get('/').status_code, 503)
+                    self.assertEqual(response.status_code, 200, f"{method} {path} should be 200 without auth")
+                    self.assertNotIn('WWW-Authenticate', response.headers)
 
-    def test_http_credentials_cover_dashboard_video_and_api(self):
+            # Enrollment still requires the configured password
+            self.assertEqual(client.post('/api/enroll', json={'name': 'Audit'}).status_code, 401)
+            self.assertEqual(client.post('/api/enroll', headers={'Authorization': 'Bearer wrong'}, json={'name': 'Audit'}).status_code, 401)
+
+        with patch.object(config, 'ADMIN_ENROLLMENT_TOKEN', ''):
+            self.assertEqual(client.post('/api/enroll', json={'name': 'Audit'}).status_code, 503)
+
+    def test_http_dashboard_video_and_api_accessible_without_login(self):
         from threading import Thread
-        from urllib.request import HTTPBasicAuthHandler, HTTPPasswordMgrWithDefaultRealm, build_opener
+        from urllib.request import urlopen
         from werkzeug.serving import make_server
 
         web = importlib.import_module('src.app')
@@ -86,11 +99,9 @@ class AuditRegressions(unittest.TestCase):
             thread.start()
             try:
                 base = 'http://127.0.0.1:' + str(server.server_port)
-                passwords = HTTPPasswordMgrWithDefaultRealm()
-                passwords.add_password(None, base, 'admin', 'audit-token')
-                client = build_opener(HTTPBasicAuthHandler(passwords))
+                # Unauthenticated direct HTTP requests succeed
                 for path, expected in (('/', b'Check face quality'), ('/stream.mjpg', b'test-frame'), ('/api/identities', b'identities')):
-                    with client.open(base + path, timeout=5) as response:
+                    with urlopen(base + path, timeout=5) as response:
                         self.assertEqual(response.status, 200)
                         self.assertEqual(response.headers['Cache-Control'], 'no-store')
                         self.assertIn(expected, response.read())
