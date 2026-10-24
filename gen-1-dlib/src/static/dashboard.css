@@ -1000,3 +1000,50 @@ html.has-camera-dock body { padding-bottom: var(--camera-dock-space,320px); }
 }
 
 .camera-shell:not(.is-floating):not(:fullscreen) .camera-stage:has(img:not([hidden])) { min-height: 0; }
+
+.voice-split { position: relative; min-height: 112px; display: grid; place-items: center; }
+.voice-split button { min-height: 44px; border: 0; border-radius: 999px; padding: 12px 16px; background: #e4e8e7; color: #15242e; font-weight: 600; }
+.voice-split-main,.voice-split-options { grid-area: 1 / 1; transition: transform 700ms cubic-bezier(.34,1.56,.64,1), opacity 250ms ease, filter 250ms ease; }
+.voice-split-main { z-index: 1; }
+.voice-split-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; opacity: 0; filter: blur(8px); transform: scale(.2,.9); pointer-events: none; }
+.voice-split.is-open .voice-split-main { transform: scale(1.5,.9); opacity: 0; filter: blur(8px); pointer-events: none; }
+.voice-split.is-open .voice-split-options { transform: scale(1); opacity: 1; filter: blur(0); pointer-events: auto; }
+.voice-split button:active { transform: scale(1.05); }
+@media (prefers-reduced-motion: reduce) { .voice-split-main,.voice-split-options { transition: none; } }
+
+.enroll-morph { display: flex; align-items: center; width: 170px; max-width: 100%; min-height: 52px; border: 1px solid var(--line); border-radius: 32px; background: #f4f4f4; overflow: hidden; transition: width 600ms cubic-bezier(.22,1.25,.36,1); }
+.enroll-morph.is-expanded { width: 420px; }
+.enroll-morph .form-field { flex: 1; min-width: 0; margin: 0; opacity: 0; transform: translateX(-10px); transition: opacity 200ms ease, transform 400ms ease; }
+.enroll-morph.is-expanded .form-field { opacity: 1; transform: none; }
+.enroll-morph label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.enroll-morph input { min-width: 0; width: 100%; border: 0; border-radius: 24px; background: transparent; padding: 12px 16px; }
+.enroll-morph input:focus-visible { outline-offset: -4px; }
+.enroll-morph #enroll-button { flex-shrink: 0; border-radius: 28px; min-height: 50px; padding: 12px 18px; background: #f4f4f4; color: #15242e; border: 0; box-shadow: none; animation: none; }
+.enroll-morph #enroll-button::before,.enroll-morph #enroll-button::after { display: none; }
+.enroll-morph.is-expanded #enroll-button { margin: 4px; min-height: 44px; background: white; }
+.enroll-morph:has(:focus-visible) { outline: 3px solid var(--blue); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .enroll-morph,.enroll-morph .form-field { transition: none; } }
+
+.enrollment-card { min-width: 0; }
+.enrollment-card form { padding-top: 24px; border-top: 1px solid var(--line); }
+.enroll-morph { min-height: 58px; align-self: center; transition: width 550ms cubic-bezier(.22,1.25,.36,1); }
+.enroll-morph .form-field { margin: 0; }
+.enroll-morph .field-note { display: none; }
+.enroll-morph .token-field { gap: 0; }
+.enroll-morph .token-field input { padding-right: 4px; }
+.enroll-morph #show-token { padding: 8px; min-width: 44px; font-size: 12px; }
+.enroll-morph #enroll-button { display: flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 200ms ease; }
+.enroll-morph[data-step="name"],.enroll-morph[data-step="password"] { width: min(420px, 100%); }
+.enroll-morph[data-step="saving"],.enroll-morph[data-step="success"] { width: 58px; justify-content: center; background: var(--ink); }
+.enroll-morph[data-step="saving"] #enroll-button,.enroll-morph[data-step="success"] #enroll-button { min-width: 56px; width: 56px; padding: 0; background: var(--ink); color: white; opacity: 1; }
+.enroll-morph[data-step="saving"] #enroll-button { font-size: 0; }
+.enroll-morph[data-step="saving"] #enroll-button::before { content: ""; position: static; display: block; width: 22px; height: 22px; border: 3px solid #82939f; border-top-color: white; border-radius: 50%; animation: enroll-spin 700ms linear infinite; }
+.enroll-morph[data-step="saved"] { width: 140px; }
+#enroll-form .form-actions { align-items: center; gap: 12px; }
+#enroll-form .form-status { max-width: 55ch; line-height: 1.5; }
+@keyframes enroll-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .enroll-morph { transition: none; } .enroll-morph[data-step="saving"] #enroll-button::before { animation: none; } }
+
+.enrollment-progress { margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+.enroll-morph input:focus-visible { outline: none; }
+@media (max-width: 500px) { #enroll-form .form-actions { gap: 10px; } .enroll-morph.is-expanded { flex-basis: 100%; } }

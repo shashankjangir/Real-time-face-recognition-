@@ -106,7 +106,7 @@ async function updateStats() {
 }
 function credentials() {
   const token = $("admin-token").value.trim();
-  if (!token) { $("admin-token").focus(); throw new Error("Enter the enrollment password first."); }
+  if (!token) { setEnrollmentStep("password"); $("admin-token").focus(); throw new Error("Enter the enrollment password first."); }
   return {"Authorization": "Bearer " + token, "Content-Type": "application/json"};
 }
 function setBusy(value, action = "") {
@@ -307,19 +307,73 @@ $("show-token").addEventListener("click", () => {
   const show = $("admin-token").type === "password"; $("admin-token").type = show ? "text" : "password";
   text("show-token", show ? "Hide" : "Show"); $("show-token").setAttribute("aria-pressed", String(show));
 });
+const enrollButton = $("enroll-button"), nameField = $("person-name").closest(".form-field");
+const passwordField = $("admin-token").closest(".form-field");
+$("admin-token").placeholder = "Enrollment password";
+const enrollMorph = document.createElement("div");
+enrollMorph.className = "enroll-morph";
+enrollMorph.id = "enroll-morph";
+enrollButton.before(enrollMorph);
+enrollMorph.append(nameField, passwordField, enrollButton);
+const enrollBack = document.createElement("button");
+enrollBack.type = "button"; enrollBack.className = "ghost-btn"; enrollBack.textContent = "Back";
+enrollMorph.before(enrollBack);
+const enrollmentProgress = document.createElement("p");
+enrollmentProgress.className = "enrollment-progress";
+enrollmentProgress.setAttribute("aria-live", "polite");
+enrollMorph.parentElement.before(enrollmentProgress);
+let enrollmentStep = "idle", savedTimer = null;
+const savedIcon = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/></svg>';
+function setEnrollmentStep(step, focus = true) {
+  clearTimeout(savedTimer);
+  enrollmentStep = step;
+  enrollMorph.dataset.step = step;
+  enrollmentProgress.textContent = step === "name" ? "Step 1 of 3 · Identity name" : step === "password" ? "Step 2 of 3 · Password for " + ($("person-name").value.trim() || "quality checks") : step === "saving" ? "Step 3 of 3 · Validating and saving" : step === "success" || step === "saved" ? "Identity saved" : "Name → Password → Capture & save";
+  const expanded = step === "name" || step === "password";
+  enrollMorph.classList.toggle("is-expanded", expanded);
+  nameField.hidden = step !== "name"; passwordField.hidden = step !== "password";
+  $("person-name").disabled = step !== "name";
+  $("admin-token").disabled = step !== "password";
+  enrollBack.hidden = !expanded;
+  enrollButton.type = "submit";
+  enrollButton.setAttribute("aria-expanded", String(expanded));
+  enrollButton.setAttribute("aria-controls", "person-name admin-token");
+  const label = {idle:"Capture & enroll",name:"Next",password:"Save",saving:"Saving",success:"Saved",saved:"Saved"}[step];
+  enrollButton.setAttribute("aria-label", label);
+  if (step === "success" || step === "saved") enrollButton.innerHTML = savedIcon + (step === "saved" ? '<span>Saved</span>' : '');
+  else enrollButton.textContent = label;
+  if (focus) (step === "name" ? $("person-name") : step === "password" ? $("admin-token") : enrollButton).focus();
+  if (step === "success") savedTimer = setTimeout(() => setEnrollmentStep("saved", false), 800);
+}
+setEnrollmentStep("idle", false);
+enrollBack.addEventListener("click", () => { if (!busy) setEnrollmentStep(enrollmentStep === "password" ? "name" : "idle"); });
+enrollMorph.addEventListener("keydown", event => {
+  if (event.key === "Escape" && !busy) { event.preventDefault(); setEnrollmentStep(enrollmentStep === "password" ? "name" : "idle"); }
+});
 $("enroll-form").addEventListener("submit", async event => {
   event.preventDefault(); if (busy) return;
+  if (enrollmentStep === "idle" || enrollmentStep === "saved") { setEnrollmentStep("name"); return; }
+  const name = $("person-name").value.trim();
+  if (!name) { text("form-status", "Enter the identity name."); setEnrollmentStep("name"); return; }
+  if (enrollmentStep === "name") { setEnrollmentStep("password"); return; }
+  if (enrollmentStep !== "password") return;
+  let succeeded = false;
   try {
-    const headers = credentials(), name = $("person-name").value.trim();
-    if (!name) throw new Error("Enter the identity name.");
+    const headers = credentials();
     setBusy(true, "Validating a fresh capture and saving the identity…");
+    setEnrollmentStep("saving", false);
     const data = await api("/api/enroll", {method:"POST", headers, body:JSON.stringify({name})});
     text("form-status", data.message + ". Capture quality: " + number(data.quality_score, 3) + ".");
     announcements.enrolled(name);
     $("person-name").value = "";
+    succeeded = true;
     await updateStats();
   } catch (error) { text("form-status", error.message); }
-  finally { setBusy(false); }
+  finally {
+    $("admin-token").value = ""; $("admin-token").type = "password";
+    text("show-token", "Show"); $("show-token").setAttribute("aria-pressed", "false");
+    setBusy(false); setEnrollmentStep(succeeded ? "success" : "password");
+  }
 });
 function historyQuery() {
   const query = new URLSearchParams({hours: $("history-hours").value});
@@ -662,7 +716,31 @@ $("speech-toggle").addEventListener("click", () => {
   announcements.toggle();
   $("speech-toggle").setAttribute("aria-pressed", String(announcements.enabled));
   text("speech-toggle", announcements.enabled ? "Mute voice" : "Enable voice");
+  $("speech-toggle").hidden = !announcements.enabled;
 });
+$("speech-toggle").hidden = !announcements.enabled;
+function setVoiceOptions(open) {
+  $("voice-split").classList.toggle("is-open", open);
+  $("voice-open").setAttribute("aria-expanded", String(open));
+  $("voice-open").inert = open;
+  $("voice-options").inert = !open;
+  text("voice-open", announcements.enabled ? "Voice controls" : "Enable voice");
+  (open ? $("voice-back") : $("voice-open")).focus();
+}
+$("voice-open").addEventListener("click", () => setVoiceOptions(true));
+$("voice-back").addEventListener("click", () => setVoiceOptions(false));
+$("voice-split").addEventListener("keydown", event => {
+  if (event.key === "Escape") setVoiceOptions(false);
+});
+for (const button of document.querySelectorAll("[data-voice]")) {
+  button.addEventListener("click", () => {
+    voiceGenderSelect.value = button.dataset.voice;
+    voiceGenderSelect.dispatchEvent(new Event("change"));
+    if (!announcements.enabled) $("speech-toggle").click();
+    setVoiceOptions(false);
+  });
+}
+
 document.addEventListener("visibilitychange", () => { if (document.hidden) announcements.cancel(); });
 window.addEventListener("pagehide", () => announcements.cancel());
 async function pollVoice() {

@@ -16,6 +16,7 @@ let failRequest = false;
 const context = vm.createContext({
   document: {body: {dataset: {qualityThreshold: "0.70"}}},
   $: element,
+  setEnrollmentStep() {},
   localStorage: {getItem: key => saved.get(key) ?? null, setItem: (key,value) => saved.set(key,value)},
   text: (id, value) => { element(id).textContent = value; },
   api: async (url, options) => {

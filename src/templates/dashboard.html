@@ -122,14 +122,17 @@
             <span class="voice-badge">Station Audio</span>
           </div>
           <p id="speech-status" class="voice-status" role="status">Voice is off. Enable it to hear recognition and enrollment.</p>
-          <div class="voice-controls-grid">
-            <button class="voice-action-btn" id="speech-toggle" type="button" aria-pressed="false">Enable voice</button>
-            <div class="voice-select-field">
-              <select class="voice-select-input" id="voice-gender" aria-label="Announcement voice">
-                <option value="female">Woman voice</option>
-                <option value="male">Man voice</option>
-              </select>
+          <div class="voice-split" id="voice-split">
+            <button id="voice-open" class="voice-split-main" type="button" aria-expanded="false" aria-controls="voice-options">Enable voice</button>
+            <div id="voice-options" class="voice-split-options" inert>
+              <button id="voice-back" type="button" aria-label="Back to voice button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+              <button type="button" data-voice="male">Man</button>
+              <button type="button" data-voice="female">Woman</button>
+              <button id="speech-toggle" type="button" aria-pressed="false" hidden>Enable voice</button>
             </div>
+            <select id="voice-gender" aria-label="Announcement voice" hidden>
+              <option value="female">Woman voice</option><option value="male">Man voice</option>
+            </select>
           </div>
         </div>
 
